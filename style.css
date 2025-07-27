@@ -65,10 +65,9 @@
 
 /* 탭 내용 영역 */
 .placeholder-tab-content {
-    background: var(--SmartThemeBlurTintColor);
-    border: 1px solid var(--SmartThemeBorderColor);
-    border-top: none;
-    padding: 20px;
+    background: transparent;
+    border: none;
+    padding: 15px 0;
     min-height: 400px;
     overflow-y: auto;
 }
@@ -271,7 +270,7 @@
 
 @media (max-width: 480px) {
     .placeholder-tab-content {
-        padding: 15px;
+        padding: 10px 0;
     }
     
     .placeholder-tab {
