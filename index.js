@@ -1,6 +1,9 @@
 // Direction 확장 - 다중 플레이스홀더 관리
 import { extension_settings, getContext, loadExtensionSettings } from "../../../extensions.js";
 import { saveSettingsDebounced } from "../../../../script.js";
+import { SlashCommand } from "../../../slash-commands/SlashCommand.js";
+import { SlashCommandParser } from "../../../slash-commands/SlashCommandParser.js";
+import { ARGUMENT_TYPE, SlashCommandNamedArgument } from "../../../slash-commands/SlashCommandArgument.js";
 
 // 확장 설정
 const extensionName = "Direction";
@@ -329,22 +332,19 @@ function updateAllPlaceholders() {
     });
 }
 
-// 슬래시 커맨드 등록
+// 슬래시 커맨드 등록 (개선된 버전)
 function registerSlashCommands() {
     console.log("registerSlashCommands 함수 호출됨");
-    console.log("window.SlashCommandParser:", typeof window.SlashCommandParser);
-    console.log("window.SlashCommand:", typeof window.SlashCommand);
+    console.log("SlashCommandParser:", typeof SlashCommandParser);
+    console.log("SlashCommand:", typeof SlashCommand);
     
-    // SlashCommandParser와 SlashCommand 확인
-    if (window.SlashCommandParser && window.SlashCommand) {
-        console.log("SlashCommandParser와 SlashCommand 모두 사용 가능");
-        
+    // 방법 1: 직접 임포트한 클래스 사용
+    if (typeof SlashCommandParser !== 'undefined' && typeof SlashCommand !== 'undefined') {
         try {
-            window.SlashCommandParser.addCommandObject(window.SlashCommand.fromProps({
+            SlashCommandParser.addCommandObject(SlashCommand.fromProps({
                 name: 'placeholder',
                 callback: async (parsedArgs) => {
                     console.log("슬래시 커맨드 /placeholder 실행됨");
-                    // 플레이스홀더 팝업 열기
                     openDirectionPopup();
                     return '';
                 },
@@ -354,17 +354,52 @@ function registerSlashCommands() {
             }));
             
             console.log("플레이스홀더 슬래시 커맨드가 성공적으로 등록되었습니다: /placeholder");
+            return;
         } catch (error) {
-            console.error("슬래시 커맨드 등록 중 오류 발생:", error);
+            console.error("임포트된 클래스로 슬래시 커맨드 등록 실패:", error);
         }
-    } else {
-        console.log("SlashCommandParser 또는 SlashCommand가 아직 로드되지 않음. 1초 후 재시도...");
-        console.log("  SlashCommandParser 존재:", !!window.SlashCommandParser);
-        console.log("  SlashCommand 존재:", !!window.SlashCommand);
-        
-        // 필요한 클래스가 아직 로드되지 않은 경우 나중에 시도
-        setTimeout(registerSlashCommands, 1000);
     }
+    
+    // 방법 2: window 객체에서 찾기 (fallback)
+    if (window.SlashCommandParser && window.SlashCommand) {
+        try {
+            window.SlashCommandParser.addCommandObject(window.SlashCommand.fromProps({
+                name: 'placeholder',
+                callback: async (parsedArgs) => {
+                    console.log("슬래시 커맨드 /placeholder 실행됨");
+                    openDirectionPopup();
+                    return '';
+                },
+                helpString: '플레이스홀더 관리 창을 엽니다.\n사용법: /placeholder',
+                namedArgumentList: [],
+                returns: '플레이스홀더 관리 창 열기',
+            }));
+            
+            console.log("플레이스홀더 슬래시 커맨드가 성공적으로 등록되었습니다 (fallback): /placeholder");
+            return;
+        } catch (error) {
+            console.error("window 객체로 슬래시 커맨드 등록 실패:", error);
+        }
+    }
+    
+    // 방법 3: 구식 addCommand 방법 시도
+    if (window.SlashCommandParser && typeof window.SlashCommandParser.addCommand === 'function') {
+        try {
+            window.SlashCommandParser.addCommand('placeholder', function() {
+                console.log("슬래시 커맨드 /placeholder 실행됨 (구식 방법)");
+                openDirectionPopup();
+                return '';
+            }, [], '<span class="monospace">/placeholder</span> – 플레이스홀더 관리 창을 엽니다', true, true);
+            
+            console.log("플레이스홀더 슬래시 커맨드가 성공적으로 등록되었습니다 (구식 방법): /placeholder");
+            return;
+        } catch (error) {
+            console.error("구식 addCommand로 슬래시 커맨드 등록 실패:", error);
+        }
+    }
+    
+    console.log("모든 슬래시 커맨드 등록 방법이 실패했습니다. 5초 후 재시도...");
+    setTimeout(registerSlashCommands, 5000);
 }
 
 // 요술봉메뉴에 버튼 추가
@@ -392,8 +427,18 @@ jQuery(async () => {
     await addToWandMenu();
     updateAllPlaceholders();
     
-    // 슬래시 커맨드 등록
-    registerSlashCommands();
-    
     console.log("Direction 확장이 로드되었습니다.");
+    
+    // SillyTavern이 완전히 로드된 후 슬래시 커맨드 등록
+    // 여러 방법으로 적절한 타이밍을 찾음
+    if (document.readyState === 'complete') {
+        setTimeout(registerSlashCommands, 2000); // 2초 후
+    } else {
+        window.addEventListener('load', () => {
+            setTimeout(registerSlashCommands, 3000); // 로드 완료 후 3초
+        });
+    }
+    
+    // 추가 안전장치: 10초 후 한 번 더 시도
+    setTimeout(registerSlashCommands, 10000);
 }); 
