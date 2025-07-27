@@ -175,7 +175,7 @@ function renderDropdown(template) {
         dropdown.prop('disabled', false);
         placeholders.forEach(placeholder => {
             const isSelected = placeholder.id === selectedPlaceholderId;
-            const displayText = `{{${placeholder.variable}}} - ${placeholder.name || '제목 없음'}`;
+            const displayText = `{{${placeholder.variable}}}`;
             dropdown.append(`<option value="${placeholder.id}" ${isSelected ? 'selected' : ''}>${displayText}</option>`);
         });
     }
