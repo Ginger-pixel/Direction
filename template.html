@@ -1,13 +1,22 @@
-<div class="flex-container flexFlowColumn" style="height: 500px;">
-    <!-- 탭 목록 -->
-    <div class="placeholder-tabs">
-        <div class="placeholder-tab-list" id="placeholder-tab-list">
-            <!-- 플레이스홀더 탭들이 여기에 동적으로 삽입됩니다 -->
-        </div>
+<div id="placeholderPanel" class="placeholder-panel">
+    <!-- 패널 헤더 -->
+    <div class="panelControlBar flex-container alignItemsBaseline">
+        <div id="placeholderPanelHeader" class="fa-fw fa-solid fa-grip drag-grabber"></div>
+        <div id="placeholderPanelClose" class="fa-fw fa-solid fa-circle-xmark floating_panel_close"></div>
     </div>
     
-    <!-- 탭 내용 -->
-    <div class="placeholder-tab-content flex1" id="placeholder-tab-content">
-        <!-- 선택된 플레이스홀더의 내용이 여기에 표시됩니다 -->
+    <!-- 패널 내용 -->
+    <div id="placeholderPanelHolder" class="scrollY">
+        <!-- 탭 목록 -->
+        <div class="placeholder-tabs">
+            <div class="placeholder-tab-list" id="placeholder-tab-list">
+                <!-- 플레이스홀더 탭들이 여기에 동적으로 삽입됩니다 -->
+            </div>
+        </div>
+        
+        <!-- 탭 내용 -->
+        <div class="placeholder-tab-content" id="placeholder-tab-content">
+            <!-- 선택된 플레이스홀더의 내용이 여기에 표시됩니다 -->
+        </div>
     </div>
 </div> 

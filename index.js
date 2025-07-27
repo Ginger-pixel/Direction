@@ -1,5 +1,5 @@
 // Direction 확장 - 탭 기반 플레이스홀더 관리
-import { extension_settings, getContext, loadExtensionSettings, renderExtensionTemplateAsync } from "../../../extensions.js";
+import { extension_settings, getContext, loadExtensionSettings } from "../../../extensions.js";
 import { saveSettingsDebounced } from "../../../../script.js";
 import { SlashCommand } from "../../../slash-commands/SlashCommand.js";
 import { SlashCommandParser } from "../../../slash-commands/SlashCommandParser.js";
@@ -129,29 +129,63 @@ async function showVariableNamePopup() {
 
 // 플레이스홀더 창 열기
 async function openDirectionPopup() {
-    const template = $(await renderExtensionTemplateAsync(`third-party/${extensionName}`, 'template'));
+    // 기존 패널이 있으면 제거
+    $("#placeholderPanel").remove();
+    
+    // 템플릿 로드
+    const templateHtml = await $.get(`${extensionFolderPath}/template.html`);
+    
+    // body에 패널 추가
+    $("body").append(templateHtml);
+    
+    const panel = $("#placeholderPanel");
     
     // 탭과 내용 렌더링
-    renderTabs(template);
-    renderTabContent(template);
+    renderTabs(panel);
+    renderTabContent(panel);
     
     // 이벤트 리스너 추가
-    setupEventListeners(template);
+    setupEventListeners(panel);
     
-    const popup = new Popup(template, POPUP_TYPE.CONFIRM, '플레이스홀더 관리', { 
-        wide: true, 
-        large: true,
-        okButton: '닫기',
-        cancelButton: false
+    // 패널 표시 (애니메이션과 함께)
+    panel.addClass('flex');
+    
+    // 닫기 버튼 이벤트
+    panel.find('#placeholderPanelClose').on('click', function() {
+        closeDirectionPanel();
     });
     
-    await popup.show();
+    // ESC 키로 닫기
+    $(document).on('keydown.placeholder-panel', function(e) {
+        if (e.which === 27) {
+            closeDirectionPanel();
+        }
+    });
+    
+    // 패널 외부 클릭으로 닫기
+    panel.on('click', function(e) {
+        if (e.target === this) {
+            closeDirectionPanel();
+        }
+    });
+}
+
+// 패널 닫기
+function closeDirectionPanel() {
+    const panel = $("#placeholderPanel");
+    panel.removeClass('flex');
+    
+    // 애니메이션 후 제거
+    setTimeout(() => {
+        panel.remove();
+        $(document).off('keydown.placeholder-panel');
+    }, 200);
 }
 
 // 탭 목록 렌더링
-function renderTabs(template) {
+function renderTabs(panel) {
     const placeholders = extension_settings[extensionName].placeholders || [];
-    const tabList = template.find('#placeholder-tab-list');
+    const tabList = panel.find('#placeholder-tab-list');
     
     let tabsHtml = '';
     
@@ -177,9 +211,9 @@ function renderTabs(template) {
 }
 
 // 탭 내용 렌더링
-function renderTabContent(template) {
+function renderTabContent(panel) {
     const placeholders = extension_settings[extensionName].placeholders || [];
-    const contentArea = template.find('#placeholder-tab-content');
+    const contentArea = panel.find('#placeholder-tab-content');
     
     if (placeholders.length === 0 || selectedTabIndex >= placeholders.length) {
         // 플레이스홀더가 없거나 선택된 탭이 범위를 벗어난 경우
@@ -219,59 +253,59 @@ function renderTabContent(template) {
 }
 
 // 탭 선택
-function selectTab(template, index) {
+function selectTab(panel, index) {
     const placeholders = extension_settings[extensionName].placeholders || [];
     
     if (index >= 0 && index < placeholders.length) {
         selectedTabIndex = index;
-        renderTabs(template);
-        renderTabContent(template);
-        setupEventListeners(template);
+        renderTabs(panel);
+        renderTabContent(panel);
+        setupEventListeners(panel);
     }
 }
 
 // 이벤트 리스너 설정
-function setupEventListeners(template) {
+function setupEventListeners(panel) {
     // 탭 클릭 이벤트
-    template.find('.placeholder-tab:not(.add-tab)').off('click').on('click', function() {
+    panel.find('.placeholder-tab:not(.add-tab)').off('click').on('click', function() {
         const index = parseInt($(this).data('index'));
-        selectTab(template, index);
+        selectTab(panel, index);
     });
     
     // + 탭 클릭 이벤트
-    template.find('.placeholder-tab.add-tab').off('click').on('click', async function() {
+    panel.find('.placeholder-tab.add-tab').off('click').on('click', async function() {
         const success = await showVariableNamePopup();
         if (success) {
             // 새로 추가된 플레이스홀더로 이동
             selectedTabIndex = extension_settings[extensionName].placeholders.length - 1;
-            renderTabs(template);
-            renderTabContent(template);
-            setupEventListeners(template);
+            renderTabs(panel);
+            renderTabContent(panel);
+            setupEventListeners(panel);
         }
     });
     
     // 제목 입력 필드 변경 이벤트
-    template.find('.placeholder-title-input').off('input').on('input', function() {
+    panel.find('.placeholder-title-input').off('input').on('input', function() {
         const index = parseInt($(this).data('index'));
         const newTitle = $(this).val();
         updatePlaceholderTitle(index, newTitle);
         // 탭 제목 즉시 업데이트
-        renderTabs(template);
-        setupEventListeners(template);
+        renderTabs(panel);
+        setupEventListeners(panel);
     });
     
     // 내용 텍스트 에리어 변경 이벤트
-    template.find('.placeholder-textarea').off('input').on('input', function() {
+    panel.find('.placeholder-textarea').off('input').on('input', function() {
         const index = parseInt($(this).data('index'));
         const newContent = $(this).val();
         updatePlaceholderContent(index, newContent);
     });
     
     // 삭제 버튼 클릭 이벤트
-    template.find('.placeholder-delete-btn').off('click').on('click', function() {
+    panel.find('.placeholder-delete-btn').off('click').on('click', function() {
         const index = parseInt($(this).data('index'));
         if (confirm('이 플레이스홀더를 삭제하시겠습니까?')) {
-            deletePlaceholder(template, index);
+            deletePlaceholder(panel, index);
         }
     });
 }
@@ -296,7 +330,7 @@ function updatePlaceholderContent(index, newContent) {
 }
 
 // 플레이스홀더 삭제
-function deletePlaceholder(template, index) {
+function deletePlaceholder(panel, index) {
     const placeholders = extension_settings[extensionName].placeholders;
     if (placeholders && placeholders[index]) {
         // 시스템에서 제거
@@ -311,9 +345,9 @@ function deletePlaceholder(template, index) {
         }
         
         // UI 업데이트
-        renderTabs(template);
-        renderTabContent(template);
-        setupEventListeners(template);
+        renderTabs(panel);
+        renderTabContent(panel);
+        setupEventListeners(panel);
         
         saveSettingsDebounced();
     }
