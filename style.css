@@ -280,6 +280,7 @@
 @media (max-width: 800px) {
     .direction-popup-content {
         width: 95svw;
+        max-height: 85svh;
     }
     
     .placeholder-row {
@@ -297,6 +298,18 @@
 }
 
 @media (max-width: 600px) {
+    /* 모바일에서 팝업 위치 조정 */
+    .direction-popup {
+        align-items: flex-start;
+        padding: 20px 0;
+    }
+    
+    .direction-popup-content {
+        width: 95svw;
+        max-height: calc(100svh - 40px);
+        margin-top: 20px;
+    }
+    
     .direction-popup-header {
         padding: 10px 15px;
     }
@@ -307,6 +320,42 @@
     
     .placeholder-textarea {
         height: 100px;
+    }
+    
+    /* 모바일에서 버튼 크기 조정 */
+    .save-placeholder, .clean-placeholder, .remove-placeholder {
+        font-size: 11px;
+        padding: 0 8px;
+        height: 28px;
+    }
+}
+
+/* 매우 작은 화면 (스마트폰 세로) */
+@media (max-width: 480px) {
+    .direction-popup {
+        padding: 10px 0;
+    }
+    
+    .direction-popup-content {
+        width: 98svw;
+        max-height: calc(100svh - 20px);
+        margin-top: 10px;
+    }
+    
+    .direction-popup-header {
+        padding: 8px 12px;
+    }
+    
+    .direction-popup-body {
+        padding: 12px;
+    }
+    
+    .placeholder-row {
+        gap: 8px;
+    }
+    
+    .placeholder-textarea {
+        height: 80px;
     }
 }
 
