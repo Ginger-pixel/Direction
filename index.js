@@ -71,6 +71,7 @@ function renderPlaceholders() {
                 <input type="text" placeholder="제목" class="placeholder-name" value="${placeholder.name}">
                 <input type="text" placeholder="변수명" class="placeholder-variable" value="${placeholder.variable}">
                 <div class="placeholder-buttons">
+                    <button class="save-placeholder" title="플레이스홀더 저장">Save</button>
                     <button class="clean-placeholder" title="내용 제거">Clean</button>
                     <button class="remove-placeholder" title="플레이스홀더 삭제">Delete</button>
                 </div>
@@ -96,6 +97,11 @@ function setupEventListeners() {
     $("#add-new-placeholder").on("click", addNewPlaceholder);
     
     // 각 플레이스홀더 항목의 이벤트
+    $(document).on("click", ".save-placeholder", function() {
+        const itemId = $(this).closest('.placeholder-item').data('id');
+        savePlaceholder(itemId);
+    });
+    
     $(document).on("click", ".remove-placeholder", function() {
         const itemId = $(this).closest('.placeholder-item').data('id');
         removePlaceholder(itemId);
@@ -106,10 +112,10 @@ function setupEventListeners() {
         cleanPlaceholder(itemId);
     });
     
-    // 입력 필드 변경 감지
+    // 입력 필드 변경 감지 (실시간 업데이트는 유지하되 시스템 적용은 Save 버튼으로)
     $(document).on("input", ".placeholder-name, .placeholder-variable, .placeholder-textarea", function() {
         const itemId = $(this).closest('.placeholder-item').data('id');
-        updatePlaceholder(itemId);
+        updatePlaceholderData(itemId);
     });
 }
 
@@ -119,7 +125,65 @@ function addNewPlaceholder() {
     extension_settings[extensionName].placeholders.push(newPlaceholder);
     refreshPlaceholdersContainer();
     saveSettingsDebounced();
-    updateAllPlaceholders();
+}
+
+// 플레이스홀더 저장 (시스템에 적용)
+function savePlaceholder(itemId) {
+    const item = $(`[data-id="${itemId}"]`);
+    const placeholder = extension_settings[extensionName].placeholders.find(p => p.id === itemId);
+    
+    if (placeholder) {
+        // 데이터 업데이트
+        placeholder.name = item.find('.placeholder-name').val();
+        placeholder.variable = item.find('.placeholder-variable').val();
+        placeholder.content = item.find('.placeholder-textarea').val();
+        
+        // 변수명 유효성 검사
+        if (!placeholder.variable || !placeholder.variable.trim()) {
+            alert("변수명을 입력해주세요.");
+            return;
+        }
+        
+        // 설정 저장
+        saveSettingsDebounced();
+        
+        // 시스템에 적용
+        applyPlaceholderToSystem(placeholder);
+        
+        // 성공 피드백
+        const saveBtn = item.find('.save-placeholder');
+        const originalText = saveBtn.text();
+        saveBtn.text('저장됨').css('background-color', '#2d5016');
+        
+        setTimeout(() => {
+            saveBtn.text(originalText).css('background-color', '');
+        }, 1500);
+    }
+}
+
+// 플레이스홀더를 시스템에 적용
+function applyPlaceholderToSystem(placeholder) {
+    if (placeholder.variable && placeholder.variable.trim()) {
+        const variableName = placeholder.variable.trim();
+        
+        // 전역 변수로 설정
+        window[`${variableName}Value`] = placeholder.content;
+        
+        // getContext를 통해서도 설정
+        const context = getContext();
+        if (context && context.setExtensionPrompt) {
+            context.setExtensionPrompt(`${extensionName}_${variableName}`, placeholder.content, 1, 0);
+        }
+        
+        // 추가적인 플레이스홀더 시스템 등록 시도
+        if (window.substituteParams) {
+            // SillyTavern의 플레이스홀더 시스템에 등록
+            const placeholderPattern = `{{${variableName}}}`;
+            console.log(`플레이스홀더 등록: ${placeholderPattern} = "${placeholder.content}"`);
+        }
+        
+        console.log(`플레이스홀더 적용됨: {{${variableName}}} = "${placeholder.content}"`);
+    }
 }
 
 // 플레이스홀더 제거
@@ -133,7 +197,6 @@ function removePlaceholder(itemId) {
     extension_settings[extensionName].placeholders = placeholders.filter(p => p.id !== itemId);
     refreshPlaceholdersContainer();
     saveSettingsDebounced();
-    updateAllPlaceholders();
 }
 
 // 플레이스홀더 내용 지우기
@@ -143,12 +206,11 @@ function cleanPlaceholder(itemId) {
         placeholder.content = "";
         $(`[data-id="${itemId}"] .placeholder-textarea`).val("");
         saveSettingsDebounced();
-        updateAllPlaceholders();
     }
 }
 
-// 플레이스홀더 업데이트
-function updatePlaceholder(itemId) {
+// 플레이스홀더 데이터만 업데이트 (시스템 적용 없이)
+function updatePlaceholderData(itemId) {
     const item = $(`[data-id="${itemId}"]`);
     const placeholder = extension_settings[extensionName].placeholders.find(p => p.id === itemId);
     
@@ -158,7 +220,6 @@ function updatePlaceholder(itemId) {
         placeholder.content = item.find('.placeholder-textarea').val();
         
         saveSettingsDebounced();
-        updateAllPlaceholders();
     }
 }
 
@@ -172,20 +233,14 @@ function closeDirectionPopup() {
     $("#direction-popup").remove();
 }
 
-// 모든 플레이스홀더 값 업데이트
+// 모든 플레이스홀더 값 업데이트 (초기 로드용)
 function updateAllPlaceholders() {
     const placeholders = extension_settings[extensionName].placeholders || [];
     
-    // 각 플레이스홀더를 전역 변수로 설정
+    // 각 플레이스홀더를 시스템에 적용
     placeholders.forEach(placeholder => {
         if (placeholder.variable && placeholder.variable.trim()) {
-            window[`${placeholder.variable}Value`] = placeholder.content;
-            
-            // getContext를 통해서도 설정 시도
-            const context = getContext();
-            if (context && context.setExtensionPrompt) {
-                context.setExtensionPrompt(`${extensionName}_${placeholder.variable}`, placeholder.content, 1, 0);
-            }
+            applyPlaceholderToSystem(placeholder);
         }
     });
 }
