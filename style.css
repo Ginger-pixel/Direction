@@ -1,4 +1,4 @@
-/* Direction 확장 스타일 */
+/* Direction 확장 스타일 - 다중 플레이스홀더 시스템 */
 
 /* 팝업 오버레이 */
 .direction-popup {
@@ -25,14 +25,16 @@
 .direction-popup-content {
     background-color: var(--SmartThemeBlurTintColor);
     border-radius: 10px;
-    width: 500px;
-    max-width: 90svw;
+    width: 700px;
+    max-width: 95svw;
     max-height: 90svh;
     box-shadow: 0 0 10px var(--black70a);
     border: 1px solid var(--SmartThemeBorderColor);
     overflow: hidden;
     animation: slideIn 0.2s ease-out forwards;
     transform: translateY(-20px);
+    display: flex;
+    flex-direction: column;
 }
 
 @keyframes slideIn {
@@ -54,6 +56,7 @@
     padding: 20px;
     border-bottom: 1px solid var(--SmartThemeBorderColor);
     background-color: #4a4a4a;
+    flex-shrink: 0;
 }
 
 .direction-popup-header h3 {
@@ -89,48 +92,176 @@
 .direction-popup-body {
     padding: 20px;
     background-color: var(--SmartThemeBlurTintColor);
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
 }
 
-/* 텍스트 에리어 */
-#direction-text {
-    width: 100%;
-    height: 200px;
-    padding: 15px;
+/* 플레이스홀더 컨테이너 */
+#placeholders-container {
+    flex: 1;
+    margin-bottom: 20px;
+}
+
+/* 개별 플레이스홀더 항목 */
+.placeholder-item {
+    margin-bottom: 25px;
     border: 1px solid var(--SmartThemeBorderColor);
     border-radius: 8px;
+    overflow: hidden;
     background-color: var(--black30a);
+    transition: all 0.2s ease;
+}
+
+.placeholder-item:hover {
+    border-color: var(--SmartThemeQuoteColor);
+    box-shadow: 0 2px 8px var(--black30a);
+}
+
+/* 플레이스홀더 헤더 */
+.placeholder-header {
+    background-color: #3a3a3a;
+    padding: 15px;
+    border-bottom: 1px solid var(--SmartThemeBorderColor);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+.placeholder-inputs {
+    display: flex;
+    gap: 10px;
+    flex: 1;
+}
+
+.placeholder-name, .placeholder-variable {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 5px;
+    background-color: var(--SmartThemeBlurTintColor);
+    color: var(--SmartThemeBodyColor);
+    font-size: var(--mainFontSize);
+    transition: all 0.2s ease;
+}
+
+.placeholder-name:focus, .placeholder-variable:focus {
+    outline: none;
+    border-color: var(--SmartThemeQuoteColor);
+    box-shadow: 0 0 0 2px rgba(var(--SmartThemeQuoteColorRGB), 0.3);
+}
+
+.placeholder-name::placeholder, .placeholder-variable::placeholder {
+    color: var(--grey30);
+    opacity: 0.7;
+}
+
+/* 플레이스홀더 버튼들 */
+.placeholder-buttons {
+    display: flex;
+    gap: 5px;
+}
+
+.add-placeholder, .remove-placeholder, .clean-placeholder {
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 5px;
+    background-color: #4a4a4a;
+    color: var(--SmartThemeBodyColor);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.add-placeholder:hover {
+    background-color: #2d5016;
+    transform: scale(1.05);
+}
+
+.remove-placeholder:hover {
+    background-color: #5a1a1a;
+    transform: scale(1.05);
+}
+
+.clean-placeholder {
+    font-size: 11px;
+    font-weight: 500;
+    width: 50px;
+}
+
+.clean-placeholder:hover {
+    background-color: #3a3a5a;
+    transform: scale(1.05);
+}
+
+/* 플레이스홀더 내용 */
+.placeholder-content {
+    padding: 15px;
+    position: relative;
+}
+
+.placeholder-textarea {
+    width: 100%;
+    height: 120px;
+    padding: 12px;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 5px;
+    background-color: var(--SmartThemeBlurTintColor);
     color: var(--SmartThemeBodyColor);
     font-family: inherit;
     font-size: var(--mainFontSize);
     resize: vertical;
     box-sizing: border-box;
-    margin-bottom: 20px;
     transition: all 0.2s ease;
     line-height: 1.5;
 }
 
-#direction-text:focus {
+.placeholder-textarea:focus {
     outline: none;
     border-color: var(--SmartThemeQuoteColor);
     box-shadow: 0 0 0 2px rgba(var(--SmartThemeQuoteColorRGB), 0.3);
-    background-color: var(--SmartThemeBlurTintColor);
 }
 
-#direction-text::placeholder {
+.placeholder-textarea::placeholder {
     color: var(--grey30);
     opacity: 0.7;
+}
+
+/* 플레이스홀더 미리보기 */
+.placeholder-preview {
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    background-color: var(--SmartThemeQuoteColor);
+    color: var(--SmartThemeBodyColor);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: calc(var(--mainFontSize) * 0.85);
+    font-family: monospace;
+    opacity: 0.8;
 }
 
 /* 버튼 컨테이너 */
 .direction-popup-buttons {
     display: flex;
-    justify-content: flex-end;
+    justify-content: center;
     gap: 12px;
+    flex-shrink: 0;
+    border-top: 1px solid var(--SmartThemeBorderColor);
+    padding-top: 20px;
+    margin-top: auto;
 }
 
-/* Clean 버튼 */
-#direction-clean-btn {
-    padding: 10px 20px;
+/* 새 플레이스홀더 추가 버튼 */
+.add-btn {
+    padding: 12px 24px;
     background-color: #4a4a4a;
     border: 1px solid var(--SmartThemeBorderColor);
     border-radius: 8px;
@@ -139,16 +270,16 @@
     transition: all 0.2s ease;
     font-size: var(--mainFontSize);
     font-weight: 500;
-    min-width: 80px;
+    min-width: 150px;
 }
 
-#direction-clean-btn:hover {
-    filter: brightness(1.2) contrast(0.8);
+.add-btn:hover {
+    background-color: #2d5016;
     transform: translateY(-1px);
     box-shadow: 0 2px 4px var(--black30a);
 }
 
-#direction-clean-btn:active {
+.add-btn:active {
     transform: translateY(0);
     box-shadow: 0 1px 2px var(--black30a);
 }
@@ -178,12 +309,26 @@
 }
 
 /* 반응형 디자인 */
-@media (max-width: 600px) {
+@media (max-width: 800px) {
     .direction-popup-content {
         width: 95svw;
-        margin: 10px;
     }
     
+    .placeholder-header {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .placeholder-inputs {
+        width: 100%;
+    }
+    
+    .placeholder-buttons {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 600px) {
     .direction-popup-header {
         padding: 15px;
     }
@@ -192,32 +337,48 @@
         padding: 15px;
     }
     
-    #direction-text {
-        height: 150px;
+    .placeholder-textarea {
+        height: 100px;
+    }
+    
+    .placeholder-inputs {
+        flex-direction: column;
     }
 }
 
-/* 다크 테마 지원 */
-.direction-popup-content {
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-}
-
 /* 스크롤바 스타일링 */
-#direction-text::-webkit-scrollbar {
+.direction-popup-body::-webkit-scrollbar {
     width: 8px;
 }
 
-#direction-text::-webkit-scrollbar-track {
+.direction-popup-body::-webkit-scrollbar-track {
     background: var(--black30a);
     border-radius: 4px;
 }
 
-#direction-text::-webkit-scrollbar-thumb {
+.direction-popup-body::-webkit-scrollbar-thumb {
     background: var(--SmartThemeBorderColor);
     border-radius: 4px;
 }
 
-#direction-text::-webkit-scrollbar-thumb:hover {
+.direction-popup-body::-webkit-scrollbar-thumb:hover {
+    background: var(--SmartThemeQuoteColor);
+}
+
+.placeholder-textarea::-webkit-scrollbar {
+    width: 6px;
+}
+
+.placeholder-textarea::-webkit-scrollbar-track {
+    background: var(--black30a);
+    border-radius: 3px;
+}
+
+.placeholder-textarea::-webkit-scrollbar-thumb {
+    background: var(--SmartThemeBorderColor);
+    border-radius: 3px;
+}
+
+.placeholder-textarea::-webkit-scrollbar-thumb:hover {
     background: var(--SmartThemeQuoteColor);
 } 

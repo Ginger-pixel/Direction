@@ -1,11 +1,11 @@
 {
-    "display_name": "Direction",
+    "display_name": "Placeholder Manager",
     "loading_order": 9,
     "requires": [],
     "optional": [],
     "js": "index.js",
     "css": "style.css",
-    "author": "Direction Extension",
+    "author": "Placeholder Manager Extension",
     "version": "1.0.0",
     "homePage": ""
 } 
