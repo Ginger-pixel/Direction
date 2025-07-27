@@ -11,8 +11,8 @@
     display: none;
     overflow-x: hidden;
     overflow-y: auto;
-    max-width: 90svw;
-    max-height: 90svh;
+    max-width: 90vw;
+    max-height: 90vh;
     min-width: 100px;
     min-height: 50px;
     border-radius: 10px;
@@ -22,14 +22,15 @@
     flex-direction: column;
     box-shadow: 0 0 10px var(--black70a);
     z-index: 3000;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
     width: 700px;
     height: 500px;
     opacity: 0;
     background: var(--SmartThemeBlurTintColor);
-    transition: all 0.2s ease;
+    /* 안전한 중앙 정렬 */
+    left: 50%;
+    top: 50%;
+    margin-left: -350px; /* width의 절반 */
+    margin-top: -250px;   /* height의 절반 */
 }
 
 #placeholderPanel.flex {
@@ -322,10 +323,12 @@
 /* 반응형 디자인 */
 @media (max-width: 800px) {
     #placeholderPanel {
-        width: calc(100svw - 20px);
-        height: calc(100svh - 40px);
-        left: 10px;
-        top: 20px;
+        width: calc(100vw - 20px);
+        height: calc(100vh - 40px);
+        left: 10px !important;
+        top: 20px !important;
+        margin-left: 0 !important;
+        margin-top: 0 !important;
         max-width: none;
         max-height: none;
     }
@@ -359,10 +362,12 @@
 
 @media (max-width: 480px) {
     #placeholderPanel {
-        width: calc(100svw - 10px);
-        height: calc(100svh - 20px);
-        left: 5px;
-        top: 10px;
+        width: calc(100vw - 10px);
+        height: calc(100vh - 20px);
+        left: 5px !important;
+        top: 10px !important;
+        margin-left: 0 !important;
+        margin-top: 0 !important;
         padding: 5px;
     }
     

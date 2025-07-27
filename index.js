@@ -135,8 +135,14 @@ async function openDirectionPopup() {
     // 템플릿 로드
     const templateHtml = await $.get(`${extensionFolderPath}/template.html`);
     
-    // body에 패널 추가
-    $("body").append(templateHtml);
+    // movingDivs에 패널 추가 (노트북 확장과 같은 방식)
+    const movingDivs = document.getElementById('movingDivs');
+    if (movingDivs) {
+        $(movingDivs).append(templateHtml);
+    } else {
+        // fallback - movingDivs가 없으면 body에 추가
+        $("body").append(templateHtml);
+    }
     
     const panel = $("#placeholderPanel");
     
@@ -147,8 +153,8 @@ async function openDirectionPopup() {
     // 이벤트 리스너 추가
     setupEventListeners(panel);
     
-    // 패널 표시 (애니메이션과 함께)
-    panel.addClass('flex');
+    // 패널 표시 (SillyTavern 애니메이션 시스템 사용)
+    await animatePlaceholderPanel(false);
     
     // 닫기 버튼 이벤트
     panel.find('#placeholderPanelClose').on('click', function() {
@@ -170,16 +176,59 @@ async function openDirectionPopup() {
     });
 }
 
-// 패널 닫기
-function closeDirectionPanel() {
-    const panel = $("#placeholderPanel");
-    panel.removeClass('flex');
+// SillyTavern 애니메이션 설정 가져오기
+async function getAnimationSettings() {
+    try {
+        const animation_duration = window.animation_duration || 125;
+        const animation_easing = window.animation_easing || 'ease-in-out';
+        return { animation_duration, animation_easing };
+    } catch (err) {
+        return { animation_duration: 125, animation_easing: 'ease-in-out' };
+    }
+}
+
+// 플레이스홀더 패널 애니메이션
+async function animatePlaceholderPanel(alreadyVisible) {
+    const panel = document.getElementById('placeholderPanel');
+    if (!panel) return;
     
-    // 애니메이션 후 제거
-    setTimeout(() => {
-        panel.remove();
+    const { animation_duration, animation_easing } = await getAnimationSettings();
+
+    const keyframes = [
+        { opacity: alreadyVisible ? 1 : 0 },
+        { opacity: alreadyVisible ? 0 : 1 },
+    ];
+    const options = {
+        duration: animation_duration,
+        easing: animation_easing,
+    };
+
+    const animation = panel.animate(keyframes, options);
+
+    if (alreadyVisible) {
+        await animation.finished;
+        panel.classList.toggle('flex');
+    } else {
+        panel.classList.toggle('flex');
+        await animation.finished;
+    }
+}
+
+// 패널 닫기
+async function closeDirectionPanel() {
+    try {
+        await animatePlaceholderPanel(true);
+        $("#placeholderPanel").remove();
         $(document).off('keydown.placeholder-panel');
-    }, 200);
+    } catch (err) {
+        // fallback - 애니메이션 실패시 바로 제거
+        const panel = $("#placeholderPanel");
+        panel.removeClass('flex');
+        setTimeout(() => {
+            panel.remove();
+            $(document).off('keydown.placeholder-panel');
+        }, 200);
+    }
 }
 
 // 탭 목록 렌더링
