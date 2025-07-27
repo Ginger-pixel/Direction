@@ -80,11 +80,16 @@
     height: 100%;
 }
 
-/* 제목과 변수명, 삭제 버튼 행 */
-.placeholder-header-row {
+/* 제목과 삭제 버튼 행 */
+.placeholder-title-row {
     display: flex;
     align-items: center;
     gap: 10px;
+    margin-bottom: 10px;
+}
+
+/* 변수명 표시 행 */
+.placeholder-variable-row {
     margin-bottom: 15px;
 }
 
@@ -107,7 +112,7 @@
 }
 
 .placeholder-variable-display {
-    flex: 0 0 auto;
+    display: inline-block;
     padding: 8px 12px;
     border: 1px solid var(--SmartThemeBorderColor);
     border-radius: 5px;
@@ -117,12 +122,11 @@
     font-size: calc(var(--mainFontSize) * 0.9);
     cursor: not-allowed;
     opacity: 0.8;
-    min-width: 120px;
 }
 
 .placeholder-delete-btn {
     padding: 8px 12px;
-    background-color: #4a2a2a;
+    background-color: var(--SmartThemeBlurTintColor);
     border: 1px solid var(--SmartThemeBorderColor);
     border-radius: 5px;
     color: var(--SmartThemeBodyColor);
@@ -136,7 +140,8 @@
 }
 
 .placeholder-delete-btn:hover {
-    background-color: #5a1a1a;
+    background-color: var(--SmartThemeQuoteColor);
+    color: var(--SmartThemeBodyColor);
     transform: scale(1.05);
 }
 
@@ -242,14 +247,15 @@
 
 /* 반응형 디자인 */
 @media (max-width: 600px) {
-    .placeholder-header-row {
-        flex-direction: column;
+    .placeholder-title-row {
+        /* 모바일에서도 가로 정렬 유지 */
+        flex-direction: row;
         gap: 8px;
     }
     
-    .placeholder-title-input,
-    .placeholder-variable-display {
-        width: 100%;
+    .placeholder-title-input {
+        /* 제목 입력창이 남은 공간 모두 차지 */
+        flex: 1;
     }
     
     .placeholder-tab {
