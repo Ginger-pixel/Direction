@@ -141,15 +141,11 @@ async function openDirectionPopup() {
     const popup = new Popup(template, POPUP_TYPE.CONFIRM, '플레이스홀더 관리', { 
         wide: true, 
         large: true,
-        okButton: '저장', 
-        cancelButton: '취소'
+        okButton: '닫기',
+        cancelButton: false
     });
     
-    const result = await popup.show();
-    
-    if (result) {
-        console.log("플레이스홀더 설정이 저장되었습니다.");
-    }
+    await popup.show();
 }
 
 // 탭 목록 렌더링
