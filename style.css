@@ -241,4 +241,23 @@
     .no-placeholders-message {
         padding: 20px 10px;
     }
+}
+
+/* 플레이스홀더 컨테이너 스크롤바 스타일 */
+#placeholders-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+#placeholders-container::-webkit-scrollbar-track {
+    background: var(--black30a);
+    border-radius: 4px;
+}
+
+#placeholders-container::-webkit-scrollbar-thumb {
+    background: var(--SmartThemeBorderColor);
+    border-radius: 4px;
+}
+
+#placeholders-container::-webkit-scrollbar-thumb:hover {
+    background: var(--SmartThemeQuoteColor);
 } 

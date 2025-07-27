@@ -14,6 +14,31 @@ const defaultSettings = {
     placeholders: []
 };
 
+// SillyTavern 시스템 예약어 목록
+const RESERVED_WORDS = [
+    // System-wide Replacement Macros
+    'pipe', 'newline', 'trim', 'noop', 'original', 'input', 'lastGenerationType',
+    'charPrompt', 'charInstruction', 'description', 'personality', 'scenario', 'persona',
+    'mesExamples', 'mesExamplesRaw', 'summary', 'user', 'char', 'version', 'charDepthPrompt',
+    'group', 'charIfNotGroup', 'groupNotMuted', 'model', 'lastMessage', 'lastUserMessage',
+    'lastCharMessage', 'lastMessageId', 'firstIncludedMessageId', 'firstDisplayedMessageId',
+    'currentSwipeId', 'lastSwipeId', 'reverse', 'time', 'date', 'weekday', 'isotime',
+    'isodate', 'datetimeformat', 'time_UTC', 'timeDiff', 'idle_duration', 'bias', 'roll',
+    'random', 'pick', 'banned', 'isMobile',
+    
+    // Instruct Mode and Context Template Macros
+    'maxPrompt', 'exampleSeparator', 'chatStart', 'systemPrompt', 'defaultSystemPrompt',
+    'instructSystemPromptPrefix', 'instructSystemPromptSuffix', 'instructUserPrefix',
+    'instructUserSuffix', 'instructAssistantPrefix', 'instructAssistantSuffix',
+    'instructFirstAssistantPrefix', 'instructLastAssistantPrefix', 'instructSystemPrefix',
+    'instructSystemSuffix', 'instructSystemInstructionPrefix', 'instructUserFiller',
+    'instructStop', 'instructFirstUserPrefix', 'instructLastUserPrefix',
+    
+    // Chat variables Macros
+    'getvar', 'setvar', 'addvar', 'incvar', 'decvar', 'getglobalvar', 'setglobalvar',
+    'addglobalvar', 'incglobalvar', 'decglobalvar', 'var'
+];
+
 // 설정 로드
 async function loadSettings() {
     extension_settings[extensionName] = extension_settings[extensionName] || {};
@@ -29,65 +54,77 @@ function generateId() {
 
 // 변수명 입력 팝업 표시
 async function showVariableNamePopup() {
-    const variableNameHtml = `
-        <div class="flex-container flexFlowColumn">
-            <p>플레이스홀더 변수명을 입력하세요:</p>
-            <input type="text" id="variable-name-input" placeholder="예: character, setting, mood" maxlength="50" class="text_pole">
-            <small style="color: var(--SmartThemeQuoteColor); opacity: 0.8; margin-top: 5px;">영문, 숫자, 언더스코어(_)만 사용 가능하며 숫자로 시작할 수 없습니다.</small>
-        </div>
-    `;
+    let success = false;
     
-    const template = $(variableNameHtml);
-    const popup = new Popup(template, POPUP_TYPE.CONFIRM, '변수명 입력', { 
-        okButton: '확인', 
-        cancelButton: '취소'
-    });
-    
-    const result = await popup.show();
-    
-    if (result) {
+    while (!success) {
+        const variableNameHtml = `
+            <div class="flex-container flexFlowColumn">
+                <p>플레이스홀더 변수명을 입력하세요:</p>
+                <input type="text" id="variable-name-input" placeholder="예: character, setting, mood" maxlength="50" class="text_pole">
+                <small style="color: var(--SmartThemeQuoteColor); opacity: 0.8; margin-top: 5px;">영문, 숫자, 언더스코어(_)만 사용 가능하며 숫자로 시작할 수 없습니다.</small>
+            </div>
+        `;
+        
+        const template = $(variableNameHtml);
+        const popup = new Popup(template, POPUP_TYPE.CONFIRM, '변수명 입력', { 
+            okButton: '확인', 
+            cancelButton: '취소'
+        });
+        
+        const result = await popup.show();
+        
+        if (!result) {
+            // 취소 버튼을 눌렀거나 ESC로 닫았을 때
+            return false;
+        }
+        
         const variableName = template.find('#variable-name-input').val().trim();
-        return await confirmVariableName(variableName);
+        
+        // 변수명 유효성 검사
+        if (!variableName) {
+            await Popup.show('변수명을 입력해주세요.', '알림');
+            continue; // 다시 입력 받기
+        }
+        
+        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(variableName)) {
+            await Popup.show('변수명 형식이 올바르지 않습니다.<br/>영문, 숫자, 언더스코어(_)만 사용 가능하며<br/>숫자로 시작할 수 없습니다.', '오류');
+            continue; // 다시 입력 받기
+        }
+        
+        // 시스템 예약어 검사
+        if (RESERVED_WORDS.includes(variableName.toLowerCase())) {
+            await Popup.show(`'${variableName}'는 SillyTavern 시스템 예약어입니다.<br/>다른 이름을 사용해주세요.`, '예약어 사용 불가');
+            continue; // 다시 입력 받기
+        }
+        
+        // 중복 검사
+        const existingVariables = extension_settings[extensionName].placeholders.map(p => p.variable);
+        if (existingVariables.includes(variableName)) {
+            await Popup.show('이미 존재하는 변수명입니다.<br/>다른 이름을 사용해주세요.', '오류');
+            continue; // 다시 입력 받기
+        }
+        
+        // 새 플레이스홀더 생성
+        const newPlaceholder = { 
+            id: generateId(), 
+            name: "", 
+            variable: variableName, 
+            content: "" 
+        };
+        
+        extension_settings[extensionName].placeholders.push(newPlaceholder);
+        
+        // 시스템에 즉시 적용
+        applyPlaceholderToSystem(newPlaceholder);
+        
+        saveSettingsDebounced();
+        success = true;
     }
     
-    return false;
-}
-
-// 변수명 확인
-async function confirmVariableName(variableName) {
-    if (!variableName) {
-        return false;
-    }
-    
-    // 영문, 숫자, 언더스코어만 허용
-    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(variableName)) {
-        await Popup.show('변수명 형식이 올바르지 않습니다.', '오류');
-        return false;
-    }
-    
-    // 중복 검사
-    const existingVariables = extension_settings[extensionName].placeholders.map(p => p.variable);
-    if (existingVariables.includes(variableName)) {
-        await Popup.show('이미 존재하는 변수명입니다.', '오류');
-        return false;
-    }
-    
-    // 새 플레이스홀더 생성
-    const newPlaceholder = { 
-        id: generateId(), 
-        name: "", 
-        variable: variableName, 
-        content: "" 
-    };
-    
-    extension_settings[extensionName].placeholders.push(newPlaceholder);
-    
-    // 시스템에 즉시 적용
-    applyPlaceholderToSystem(newPlaceholder);
-    
-    saveSettingsDebounced();
     return true;
 }
+
+
 
 // 플레이스홀더 창 열기
 async function openDirectionPopup() {
