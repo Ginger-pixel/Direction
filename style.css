@@ -90,6 +90,7 @@
 /* 변수명 표시 행 */
 .placeholder-variable-row {
     margin-bottom: 10px;
+    text-align: left;
 }
 
 .placeholder-title-input {
@@ -121,6 +122,7 @@
     font-size: calc(var(--mainFontSize) * 0.9);
     cursor: not-allowed;
     opacity: 0.8;
+    margin-left: 0;
 }
 
 .placeholder-delete-btn {
