@@ -114,19 +114,17 @@
     background-color: var(--grey50);
 }
 
-/* 메뉴 아이템 스타일 */
-#direction-menu-item {
+/* 요술봉메뉴 버튼 스타일 */
+#direction_button {
     cursor: pointer;
-    padding: 10px 15px;
-    border-radius: 5px;
     transition: background-color 0.2s;
 }
 
-#direction-menu-item:hover {
+#direction_button:hover {
     background-color: var(--grey60);
 }
 
-.extension-menu-icon {
+.extensionsMenuExtensionButton {
     margin-right: 10px;
     width: 16px;
     text-align: center;

@@ -1,5 +1,5 @@
 // Direction 확장 - 전개 지시 기능
-import { extension_settings, getContext, loadExtensionSettings, registerSlashCommand } from "../../../extensions.js";
+import { extension_settings, getContext, loadExtensionSettings } from "../../../extensions.js";
 import { saveSettingsDebounced } from "../../../../script.js";
 
 // 확장 설정
@@ -87,30 +87,28 @@ function updateDirectionPlaceholder(value) {
     window.directionValue = value;
 }
 
-// 요술봉메뉴에 항목 추가
-function addToWandMenu() {
-    // 요술봉 메뉴 버튼 찾기
-    const wandMenu = $("#extensionsMenu, #quickActionMenu, #extensions_settings, .extensions-menu");
-    
-    if (wandMenu.length === 0) {
-        // 다른 방법으로 메뉴에 추가 시도
-        setTimeout(addToWandMenu, 1000);
-        return;
+// 요술봉메뉴에 버튼 추가
+async function addToWandMenu() {
+    // button.html 파일 로드
+    try {
+        const buttonHtml = await $.get(`${extensionFolderPath}/button.html`);
+        
+        // 요술봉 메뉴를 찾아서 버튼 추가
+        const extensionsMenu = $("#extensionsMenu");
+        if (extensionsMenu.length > 0) {
+            extensionsMenu.append(buttonHtml);
+            
+            // 클릭 이벤트 추가
+            $("#direction_button").on("click", openDirectionPopup);
+            
+            console.log("Direction 버튼이 요술봉메뉴에 추가되었습니다.");
+        } else {
+            console.log("요술봉메뉴를 찾을 수 없습니다. 다시 시도합니다...");
+            setTimeout(addToWandMenu, 1000);
+        }
+    } catch (error) {
+        console.error("button.html 로드 실패:", error);
     }
-    
-    // 전개 지시 버튼 생성
-    const directionButton = $(`
-        <div id="direction-menu-item" class="list-group-item flex-container flexGap5" data-i18n="Direction">
-            <div class="fa-solid fa-compass extension-menu-icon"></div>
-            <span>전개 지시</span>
-        </div>
-    `);
-    
-    // 클릭 이벤트 추가
-    directionButton.on("click", openDirectionPopup);
-    
-    // 메뉴에 추가
-    wandMenu.first().append(directionButton);
 }
 
 // 확장 초기화
@@ -118,8 +116,8 @@ jQuery(async () => {
     // 설정 로드
     await loadSettings();
     
-    // 요술봉메뉴에 항목 추가
-    addToWandMenu();
+    // 요술봉메뉴에 버튼 추가
+    await addToWandMenu();
     
     // {{direction}} 플레이스홀더 등록
     updateDirectionPlaceholder(extension_settings[extensionName].direction_text || "");
