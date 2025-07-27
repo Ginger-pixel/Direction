@@ -331,22 +331,37 @@ function updateAllPlaceholders() {
 
 // 슬래시 커맨드 등록
 function registerSlashCommands() {
+    console.log("registerSlashCommands 함수 호출됨");
+    console.log("window.SlashCommandParser:", typeof window.SlashCommandParser);
+    console.log("window.SlashCommand:", typeof window.SlashCommand);
+    
     // SlashCommandParser와 SlashCommand 확인
     if (window.SlashCommandParser && window.SlashCommand) {
-        window.SlashCommandParser.addCommandObject(window.SlashCommand.fromProps({
-            name: 'placeholder',
-            callback: async (parsedArgs) => {
-                // 플레이스홀더 팝업 열기
-                openDirectionPopup();
-                return '';
-            },
-            helpString: '플레이스홀더 관리 창을 엽니다.\n사용법: /placeholder',
-            namedArgumentList: [],
-            returns: '플레이스홀더 관리 창 열기',
-        }));
+        console.log("SlashCommandParser와 SlashCommand 모두 사용 가능");
         
-        console.log("플레이스홀더 슬래시 커맨드가 등록되었습니다: /placeholder");
+        try {
+            window.SlashCommandParser.addCommandObject(window.SlashCommand.fromProps({
+                name: 'placeholder',
+                callback: async (parsedArgs) => {
+                    console.log("슬래시 커맨드 /placeholder 실행됨");
+                    // 플레이스홀더 팝업 열기
+                    openDirectionPopup();
+                    return '';
+                },
+                helpString: '플레이스홀더 관리 창을 엽니다.\n사용법: /placeholder',
+                namedArgumentList: [],
+                returns: '플레이스홀더 관리 창 열기',
+            }));
+            
+            console.log("플레이스홀더 슬래시 커맨드가 성공적으로 등록되었습니다: /placeholder");
+        } catch (error) {
+            console.error("슬래시 커맨드 등록 중 오류 발생:", error);
+        }
     } else {
+        console.log("SlashCommandParser 또는 SlashCommand가 아직 로드되지 않음. 1초 후 재시도...");
+        console.log("  SlashCommandParser 존재:", !!window.SlashCommandParser);
+        console.log("  SlashCommand 존재:", !!window.SlashCommand);
+        
         // 필요한 클래스가 아직 로드되지 않은 경우 나중에 시도
         setTimeout(registerSlashCommands, 1000);
     }
