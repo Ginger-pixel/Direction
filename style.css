@@ -53,12 +53,12 @@
     align-items: center;
     padding: 20px;
     border-bottom: 1px solid var(--SmartThemeBorderColor);
-    background-color: var(--SmartThemeQuoteColor);
+    background-color: #4a4a4a;
 }
 
 .direction-popup-header h3 {
     margin: 0;
-    color: #000;
+    color: var(--SmartThemeBodyColor);
     font-size: calc(var(--mainFontSize) * 1.1);
     font-weight: 600;
 }
@@ -131,10 +131,10 @@
 /* Clean 버튼 */
 #direction-clean-btn {
     padding: 10px 20px;
-    background-color: var(--SmartThemeQuoteColor);
+    background-color: #4a4a4a;
     border: 1px solid var(--SmartThemeBorderColor);
     border-radius: 8px;
-    color: #000;
+    color: var(--SmartThemeBodyColor);
     cursor: pointer;
     transition: all 0.2s ease;
     font-size: var(--mainFontSize);
