@@ -39,8 +39,8 @@ const RESERVED_WORDS = [
     'addglobalvar', 'incglobalvar', 'decglobalvar', 'var'
 ];
 
-// 현재 선택된 플레이스홀더 인덱스
-let selectedPlaceholderIndex = -1;
+// 현재 선택된 플레이스홀더 ID
+let selectedPlaceholderId = null;
 
 // 설정 로드
 async function loadSettings() {
@@ -122,6 +122,9 @@ async function showVariableNamePopup() {
         
         saveSettingsDebounced();
         success = true;
+        
+        // 새로 생성된 플레이스홀더를 선택
+        selectedPlaceholderId = newPlaceholder.id;
     }
     
     return true;
@@ -131,9 +134,15 @@ async function showVariableNamePopup() {
 async function openDirectionPopup() {
     const template = $(await renderExtensionTemplateAsync(`third-party/${extensionName}`, 'template'));
     
+    // 첫 번째 플레이스홀더를 기본 선택
+    const placeholders = extension_settings[extensionName].placeholders || [];
+    if (placeholders.length > 0 && !selectedPlaceholderId) {
+        selectedPlaceholderId = placeholders[0].id;
+    }
+    
     // 드롭다운과 편집 영역 렌더링
     renderDropdown(template);
-    renderEditorArea(template);
+    renderEditor(template);
     
     // 이벤트 리스너 추가
     setupEventListeners(template);
@@ -152,59 +161,60 @@ async function openDirectionPopup() {
     }
 }
 
-// 드롭다운 렌더링
+// 드롭다운 옵션 렌더링
 function renderDropdown(template) {
     const placeholders = extension_settings[extensionName].placeholders || [];
-    const dropdown = template.find('#placeholder-selector');
+    const dropdown = template.find('#placeholder-dropdown');
     
-    // 기본 옵션 설정
-    dropdown.html('<option value="">플레이스홀더를 선택하세요</option>');
+    dropdown.empty();
     
-    // 각 플레이스홀더 옵션 추가
-    placeholders.forEach((placeholder, index) => {
-        const displayName = placeholder.name || `{{${placeholder.variable}}}`;
-        const isSelected = index === selectedPlaceholderIndex;
-        dropdown.append(`<option value="${index}" ${isSelected ? 'selected' : ''}>${displayName}</option>`);
-    });
+    if (placeholders.length === 0) {
+        dropdown.append('<option value="">플레이스홀더가 없습니다</option>');
+        dropdown.prop('disabled', true);
+    } else {
+        dropdown.prop('disabled', false);
+        placeholders.forEach(placeholder => {
+            const isSelected = placeholder.id === selectedPlaceholderId;
+            const displayText = `{{${placeholder.variable}}} - ${placeholder.name || '제목 없음'}`;
+            dropdown.append(`<option value="${placeholder.id}" ${isSelected ? 'selected' : ''}>${displayText}</option>`);
+        });
+    }
 }
 
 // 편집 영역 렌더링
-function renderEditorArea(template) {
+function renderEditor(template) {
     const placeholders = extension_settings[extensionName].placeholders || [];
     const editorArea = template.find('#placeholder-editor-area');
     
-    if (placeholders.length === 0 || selectedPlaceholderIndex < 0 || selectedPlaceholderIndex >= placeholders.length) {
+    const selectedPlaceholder = placeholders.find(p => p.id === selectedPlaceholderId);
+    
+    if (!selectedPlaceholder) {
         // 플레이스홀더가 없거나 선택되지 않은 경우
         editorArea.html(`
             <div class="no-placeholders-message">
-                <h3>"+ 새 플레이스홀더" 버튼을 클릭하여 시작하세요.</h3>
-                <p>플레이스홀더를 생성한 후 드롭다운에서 선택하여 편집할 수 있습니다.</p>
+                <h3>+ 버튼을 클릭하여 새로운 플레이스홀더를 만들어보세요.</h3>
+                <p>플레이스홀더를 사용하면 반복되는 텍스트를 효율적으로 관리할 수 있습니다.</p>
             </div>
         `);
         return;
     }
     
-    const placeholder = placeholders[selectedPlaceholderIndex];
-    
     const editorHtml = `
         <div class="placeholder-editor">
-            <div class="placeholder-variable-row">
-                <div class="placeholder-variable-display">{{${placeholder.variable}}}</div>
-            </div>
             <div class="placeholder-title-row">
                 <input type="text" 
                        class="placeholder-title-input" 
                        placeholder="플레이스홀더 제목을 입력하세요" 
-                       value="${placeholder.name}"
-                       data-index="${selectedPlaceholderIndex}">
-                <button class="placeholder-delete-btn" data-index="${selectedPlaceholderIndex}" title="플레이스홀더 삭제">
+                       value="${selectedPlaceholder.name}"
+                       data-id="${selectedPlaceholder.id}">
+                <button class="placeholder-delete-btn" data-id="${selectedPlaceholder.id}" title="플레이스홀더 삭제">
                     <i class="fa-solid fa-trash"></i>
                 </button>
             </div>
             <div class="placeholder-content-area">
                 <textarea class="placeholder-textarea" 
                           placeholder="여기에 내용을 입력하세요..." 
-                          data-index="${selectedPlaceholderIndex}">${placeholder.content}</textarea>
+                          data-id="${selectedPlaceholder.id}">${selectedPlaceholder.content}</textarea>
             </div>
         </div>
     `;
@@ -212,33 +222,39 @@ function renderEditorArea(template) {
     editorArea.html(editorHtml);
 }
 
+// 플레이스홀더 선택
+function selectPlaceholder(template, placeholderId) {
+    selectedPlaceholderId = placeholderId;
+    renderDropdown(template);
+    renderEditor(template);
+    setupEventListeners(template);
+}
+
 // 이벤트 리스너 설정
 function setupEventListeners(template) {
-    // 드롭다운 선택 이벤트
-    template.find('#placeholder-selector').off('change').on('change', function() {
-        const selectedValue = $(this).val();
-        selectedPlaceholderIndex = selectedValue === '' ? -1 : parseInt(selectedValue);
-        renderEditorArea(template);
-        setupEventListeners(template);
+    // 드롭다운 변경 이벤트
+    template.find('#placeholder-dropdown').off('change').on('change', function() {
+        const placeholderId = $(this).val();
+        if (placeholderId) {
+            selectPlaceholder(template, placeholderId);
+        }
     });
     
-    // 새 플레이스홀더 추가 버튼
-    template.find('#add-new-placeholder').off('click').on('click', async function() {
+    // + 버튼 클릭 이벤트
+    template.find('#add-placeholder-btn').off('click').on('click', async function() {
         const success = await showVariableNamePopup();
         if (success) {
-            // 새로 추가된 플레이스홀더를 선택
-            selectedPlaceholderIndex = extension_settings[extensionName].placeholders.length - 1;
             renderDropdown(template);
-            renderEditorArea(template);
+            renderEditor(template);
             setupEventListeners(template);
         }
     });
     
     // 제목 입력 필드 변경 이벤트
     template.find('.placeholder-title-input').off('input').on('input', function() {
-        const index = parseInt($(this).data('index'));
+        const placeholderId = $(this).data('id');
         const newTitle = $(this).val();
-        updatePlaceholderTitle(index, newTitle);
+        updatePlaceholderTitle(placeholderId, newTitle);
         // 드롭다운 옵션 즉시 업데이트
         renderDropdown(template);
         setupEventListeners(template);
@@ -246,61 +262,63 @@ function setupEventListeners(template) {
     
     // 내용 텍스트 에리어 변경 이벤트
     template.find('.placeholder-textarea').off('input').on('input', function() {
-        const index = parseInt($(this).data('index'));
+        const placeholderId = $(this).data('id');
         const newContent = $(this).val();
-        updatePlaceholderContent(index, newContent);
+        updatePlaceholderContent(placeholderId, newContent);
     });
     
     // 삭제 버튼 클릭 이벤트
     template.find('.placeholder-delete-btn').off('click').on('click', function() {
-        const index = parseInt($(this).data('index'));
+        const placeholderId = $(this).data('id');
         if (confirm('이 플레이스홀더를 삭제하시겠습니까?')) {
-            deletePlaceholder(template, index);
+            deletePlaceholder(template, placeholderId);
         }
     });
 }
 
 // 플레이스홀더 제목 업데이트
-function updatePlaceholderTitle(index, newTitle) {
+function updatePlaceholderTitle(placeholderId, newTitle) {
     const placeholders = extension_settings[extensionName].placeholders;
-    if (placeholders && placeholders[index]) {
-        placeholders[index].name = newTitle;
+    const placeholder = placeholders.find(p => p.id === placeholderId);
+    if (placeholder) {
+        placeholder.name = newTitle;
         saveSettingsDebounced();
     }
 }
 
 // 플레이스홀더 내용 업데이트
-function updatePlaceholderContent(index, newContent) {
+function updatePlaceholderContent(placeholderId, newContent) {
     const placeholders = extension_settings[extensionName].placeholders;
-    if (placeholders && placeholders[index]) {
-        placeholders[index].content = newContent;
-        applyPlaceholderToSystem(placeholders[index]);
+    const placeholder = placeholders.find(p => p.id === placeholderId);
+    if (placeholder) {
+        placeholder.content = newContent;
+        applyPlaceholderToSystem(placeholder);
         saveSettingsDebounced();
     }
 }
 
 // 플레이스홀더 삭제
-function deletePlaceholder(template, index) {
+function deletePlaceholder(template, placeholderId) {
     const placeholders = extension_settings[extensionName].placeholders;
-    if (placeholders && placeholders[index]) {
+    const placeholderIndex = placeholders.findIndex(p => p.id === placeholderId);
+    
+    if (placeholderIndex !== -1) {
         // 시스템에서 제거
-        removePlaceholderFromSystem(placeholders[index]);
+        removePlaceholderFromSystem(placeholders[placeholderIndex]);
         
         // 배열에서 제거
-        placeholders.splice(index, 1);
+        placeholders.splice(placeholderIndex, 1);
         
-        // 선택된 인덱스 조정
-        if (selectedPlaceholderIndex >= placeholders.length) {
-            selectedPlaceholderIndex = Math.max(-1, placeholders.length - 1);
-        } else if (selectedPlaceholderIndex === index) {
-            selectedPlaceholderIndex = -1; // 현재 선택된 항목이 삭제된 경우
-        } else if (selectedPlaceholderIndex > index) {
-            selectedPlaceholderIndex--; // 앞의 항목이 삭제된 경우 인덱스 조정
+        // 선택된 플레이스홀더 조정
+        if (placeholders.length > 0) {
+            selectedPlaceholderId = placeholders[0].id;
+        } else {
+            selectedPlaceholderId = null;
         }
         
         // UI 업데이트
         renderDropdown(template);
-        renderEditorArea(template);
+        renderEditor(template);
         setupEventListeners(template);
         
         saveSettingsDebounced();

@@ -1,24 +1,23 @@
 /* Direction 확장 스타일 - 드롭다운 기반 플레이스홀더 관리 */
 
-/* 플레이스홀더 제어 영역 */
-.placeholder-controls {
+/* 드롭다운과 추가 버튼 행 */
+.placeholder-selector-row {
     display: flex;
-    gap: 12px;
-    margin-bottom: 20px;
     align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
 }
 
-/* 플레이스홀더 드롭다운 */
+/* 변수명 드롭다운 */
 .placeholder-dropdown {
     flex: 1;
-    padding: 10px 12px;
+    padding: 8px 12px;
     border: 1px solid var(--SmartThemeBorderColor);
     border-radius: 5px;
-    background-color: var(--SmartThemeBlurTintColor);
+    background-color: var(--black30a);
     color: var(--SmartThemeBodyColor);
-    font-family: inherit;
-    font-size: var(--mainFontSize);
-    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    font-size: calc(var(--mainFontSize) * 0.9);
     transition: all 0.2s ease;
 }
 
@@ -28,58 +27,38 @@
     box-shadow: 0 0 0 2px rgba(var(--SmartThemeQuoteColorRGB), 0.3);
 }
 
-/* 새 플레이스홀더 추가 버튼 */
+/* 플러스 버튼 */
 .add-placeholder-btn {
-    padding: 10px 16px;
-    background-color: var(--SmartThemeQuoteColor);
+    padding: 8px 12px;
+    background-color: var(--SmartThemeBlurTintColor);
     border: 1px solid var(--SmartThemeBorderColor);
     border-radius: 5px;
-    color: var(--SmartThemeBodyColor);
+    color: var(--SmartThemeQuoteColor);
     cursor: pointer;
     transition: all 0.2s ease;
-    font-size: var(--mainFontSize);
-    font-weight: 500;
-    white-space: nowrap;
+    font-size: 16px;
+    min-width: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .add-placeholder-btn:hover {
     background-color: var(--SmartThemeQuoteColor);
-    filter: brightness(1.2);
-    transform: translateY(-1px);
+    color: var(--SmartThemeBodyColor);
+    transform: scale(1.05);
 }
 
 /* 편집 영역 */
 .placeholder-editor-area {
-    background: transparent;
-    padding: 0;
     overflow-y: auto;
 }
 
-/* 플레이스홀더 편집기 */
+/* 플레이스홀더 편집 폼 */
 .placeholder-editor {
     display: flex;
     flex-direction: column;
     height: 100%;
-}
-
-/* 변수명 표시 행 */
-.placeholder-variable-row {
-    margin-bottom: 10px;
-    text-align: left;
-}
-
-.placeholder-variable-display {
-    display: inline-block;
-    padding: 8px 12px;
-    border: 1px solid var(--SmartThemeBorderColor);
-    border-radius: 5px;
-    background-color: var(--black50a);
-    color: var(--SmartThemeQuoteColor);
-    font-family: 'Courier New', monospace;
-    font-size: calc(var(--mainFontSize) * 0.9);
-    cursor: not-allowed;
-    opacity: 0.8;
-    margin-left: 0;
 }
 
 /* 제목과 삭제 버튼 행 */
@@ -87,7 +66,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
 }
 
 .placeholder-title-input {
@@ -231,24 +210,16 @@
 
 /* 반응형 디자인 */
 @media (max-width: 600px) {
-    .placeholder-controls {
-        flex-direction: column;
+    .placeholder-selector-row {
         gap: 8px;
     }
     
-    .placeholder-dropdown,
-    .add-placeholder-btn {
-        width: 100%;
-    }
-    
     .placeholder-title-row {
-        /* 모바일에서도 가로 정렬 유지 */
         flex-direction: row;
         gap: 8px;
     }
     
     .placeholder-title-input {
-        /* 제목 입력창이 남은 공간 모두 차지 */
         flex: 1;
     }
     
@@ -258,6 +229,11 @@
 }
 
 @media (max-width: 480px) {
+    .placeholder-selector-row {
+        gap: 6px;
+        margin-bottom: 15px;
+    }
+    
     .placeholder-textarea {
         min-height: 150px;
     }
