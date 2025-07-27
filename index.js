@@ -38,8 +38,9 @@ function showVariableNamePopup() {
                     <h3>변수명 입력</h3>
                 </div>
                 <div class="variable-name-popup-body">
-                    <p>변수명을 입력하세요:</p>
+                    <p>플레이스홀더 변수명을 입력하세요:</p>
                     <input type="text" id="variable-name-input" placeholder="예: character, setting, mood" maxlength="50">
+                    <small>영문, 숫자, 언더스코어(_)만 사용 가능하며 숫자로 시작할 수 없습니다.</small>
                     <div class="variable-name-popup-buttons">
                         <button id="variable-name-cancel" class="popup-btn cancel-btn">취소</button>
                         <button id="variable-name-confirm" class="popup-btn confirm-btn">확인</button>
@@ -78,20 +79,20 @@ function confirmVariableName() {
     const variableName = $("#variable-name-input").val().trim();
     
     if (!variableName) {
-        alert("변수명을 입력해주세요.");
+        $("#variable-name-input").focus();
         return;
     }
     
     // 영문, 숫자, 언더스코어만 허용
     if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(variableName)) {
-        alert("변수명은 영문, 숫자, 언더스코어(_)만 사용하고 숫자로 시작할 수 없습니다.");
+        $("#variable-name-input").val('').focus();
         return;
     }
     
     // 중복 검사
     const existingVariables = extension_settings[extensionName].placeholders.map(p => p.variable);
     if (existingVariables.includes(variableName)) {
-        alert("이미 존재하는 변수명입니다.");
+        $("#variable-name-input").val('').focus();
         return;
     }
     
@@ -234,10 +235,7 @@ function applyPlaceholderToSystem(placeholder) {
         if (window.substituteParams) {
             // SillyTavern의 플레이스홀더 시스템에 등록
             const placeholderPattern = `{{${variableName}}}`;
-            console.log(`플레이스홀더 등록: ${placeholderPattern} = "${placeholder.content}"`);
         }
-        
-        console.log(`플레이스홀더 적용됨: {{${variableName}}} = "${placeholder.content}"`);
     }
 }
 
@@ -249,17 +247,13 @@ function removePlaceholderFromSystem(placeholder) {
         // 전역 변수 제거
         if (window[`${variableName}Value`]) {
             delete window[`${variableName}Value`];
-            console.log(`전역 변수 제거됨: ${variableName}Value`);
         }
         
         // getContext를 통한 제거 시도
         const context = getContext();
         if (context && context.setExtensionPrompt) {
             context.setExtensionPrompt(`${extensionName}_${variableName}`, "", 1, 0);
-            console.log(`컨텍스트에서 제거됨: ${extensionName}_${variableName}`);
         }
-        
-        console.log(`플레이스홀더 시스템에서 제거됨: {{${variableName}}}`);
     }
 }
 
@@ -277,8 +271,6 @@ function removePlaceholder(itemId) {
     extension_settings[extensionName].placeholders = extension_settings[extensionName].placeholders.filter(p => p.id !== itemId);
     refreshPlaceholdersContainer();
     saveSettingsDebounced();
-    
-    console.log(`플레이스홀더 완전 제거 완료: ${placeholderToRemove?.variable || 'unknown'}`);
 }
 
 // 플레이스홀더 내용 지우기
@@ -332,74 +324,26 @@ function updateAllPlaceholders() {
     });
 }
 
-// 슬래시 커맨드 등록 (개선된 버전)
+// 슬래시 커맨드 등록
 function registerSlashCommands() {
-    console.log("registerSlashCommands 함수 호출됨");
-    console.log("SlashCommandParser:", typeof SlashCommandParser);
-    console.log("SlashCommand:", typeof SlashCommand);
-    
-    // 방법 1: 직접 임포트한 클래스 사용
-    if (typeof SlashCommandParser !== 'undefined' && typeof SlashCommand !== 'undefined') {
-        try {
-            SlashCommandParser.addCommandObject(SlashCommand.fromProps({
-                name: 'placeholder',
-                callback: async (parsedArgs) => {
-                    console.log("슬래시 커맨드 /placeholder 실행됨");
-                    openDirectionPopup();
-                    return '';
-                },
-                helpString: '플레이스홀더 관리 창을 엽니다.\n사용법: /placeholder',
-                namedArgumentList: [],
-                returns: '플레이스홀더 관리 창 열기',
-            }));
-            
-            console.log("플레이스홀더 슬래시 커맨드가 성공적으로 등록되었습니다: /placeholder");
-            return;
-        } catch (error) {
-            console.error("임포트된 클래스로 슬래시 커맨드 등록 실패:", error);
-        }
-    }
-    
-    // 방법 2: window 객체에서 찾기 (fallback)
-    if (window.SlashCommandParser && window.SlashCommand) {
-        try {
-            window.SlashCommandParser.addCommandObject(window.SlashCommand.fromProps({
-                name: 'placeholder',
-                callback: async (parsedArgs) => {
-                    console.log("슬래시 커맨드 /placeholder 실행됨");
-                    openDirectionPopup();
-                    return '';
-                },
-                helpString: '플레이스홀더 관리 창을 엽니다.\n사용법: /placeholder',
-                namedArgumentList: [],
-                returns: '플레이스홀더 관리 창 열기',
-            }));
-            
-            console.log("플레이스홀더 슬래시 커맨드가 성공적으로 등록되었습니다 (fallback): /placeholder");
-            return;
-        } catch (error) {
-            console.error("window 객체로 슬래시 커맨드 등록 실패:", error);
-        }
-    }
-    
-    // 방법 3: 구식 addCommand 방법 시도
-    if (window.SlashCommandParser && typeof window.SlashCommandParser.addCommand === 'function') {
-        try {
-            window.SlashCommandParser.addCommand('placeholder', function() {
-                console.log("슬래시 커맨드 /placeholder 실행됨 (구식 방법)");
+    try {
+        SlashCommandParser.addCommandObject(SlashCommand.fromProps({
+            name: 'placeholder',
+            callback: async (parsedArgs) => {
                 openDirectionPopup();
                 return '';
-            }, [], '<span class="monospace">/placeholder</span> – 플레이스홀더 관리 창을 엽니다', true, true);
-            
-            console.log("플레이스홀더 슬래시 커맨드가 성공적으로 등록되었습니다 (구식 방법): /placeholder");
-            return;
-        } catch (error) {
-            console.error("구식 addCommand로 슬래시 커맨드 등록 실패:", error);
-        }
+            },
+            helpString: '플레이스홀더 관리 창을 엽니다.\n사용법: /placeholder',
+            namedArgumentList: [],
+            returns: '플레이스홀더 관리 창 열기',
+        }));
+        
+        console.log("플레이스홀더 슬래시 커맨드가 등록되었습니다: /placeholder");
+    } catch (error) {
+        console.error("슬래시 커맨드 등록 실패:", error);
+        // 실패 시 5초 후 재시도
+        setTimeout(registerSlashCommands, 5000);
     }
-    
-    console.log("모든 슬래시 커맨드 등록 방법이 실패했습니다. 5초 후 재시도...");
-    setTimeout(registerSlashCommands, 5000);
 }
 
 // 요술봉메뉴에 버튼 추가
@@ -411,9 +355,7 @@ async function addToWandMenu() {
         if (extensionsMenu.length > 0) {
             extensionsMenu.append(buttonHtml);
             $("#direction_button").on("click", openDirectionPopup);
-            console.log("Direction 버튼이 요술봉메뉴에 추가되었습니다.");
         } else {
-            console.log("요술봉메뉴를 찾을 수 없습니다. 다시 시도합니다...");
             setTimeout(addToWandMenu, 1000);
         }
     } catch (error) {
@@ -427,18 +369,8 @@ jQuery(async () => {
     await addToWandMenu();
     updateAllPlaceholders();
     
+    // SillyTavern 로드 완료 후 슬래시 커맨드 등록
+    setTimeout(registerSlashCommands, 2000);
+    
     console.log("Direction 확장이 로드되었습니다.");
-    
-    // SillyTavern이 완전히 로드된 후 슬래시 커맨드 등록
-    // 여러 방법으로 적절한 타이밍을 찾음
-    if (document.readyState === 'complete') {
-        setTimeout(registerSlashCommands, 2000); // 2초 후
-    } else {
-        window.addEventListener('load', () => {
-            setTimeout(registerSlashCommands, 3000); // 로드 완료 후 3초
-        });
-    }
-    
-    // 추가 안전장치: 10초 후 한 번 더 시도
-    setTimeout(registerSlashCommands, 10000);
 }); 

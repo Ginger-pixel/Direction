@@ -79,9 +79,17 @@
 }
 
 .variable-name-popup-body p {
-    margin: 0 0 15px 0;
+    margin-bottom: 10px;
     color: var(--SmartThemeBodyColor);
-    font-size: var(--mainFontSize);
+}
+
+.variable-name-popup-body small {
+    display: block;
+    margin-top: 5px;
+    margin-bottom: 15px;
+    color: var(--SmartThemeQuoteColor);
+    font-size: 0.9em;
+    opacity: 0.8;
 }
 
 #variable-name-input {
@@ -391,6 +399,15 @@
     transform: scale(1.1);
 }
 
+/* 모바일 안전 영역 기본 설정 */
+@supports (padding: max(0px)) {
+    .direction-popup-content,
+    .variable-name-popup-content {
+        padding-top: max(10px, env(safe-area-inset-top, 0px));
+        padding-bottom: max(10px, env(safe-area-inset-bottom, 0px));
+    }
+}
+
 /* 반응형 디자인 */
 @media (max-width: 800px) {
     .direction-popup-content {
@@ -426,11 +443,11 @@
     .direction-popup-content {
         position: fixed;
         left: 50%;
-        top: 20px;
+        top: max(60px, env(safe-area-inset-top, 0px) + 20px);
         transform: translateX(-50%);
         width: calc(100svw - 20px);
         max-width: 95svw;
-        max-height: calc(100svh - 40px);
+        max-height: calc(100svh - max(80px, env(safe-area-inset-top, 0px) + 40px));
         margin: 0;
         overflow-y: auto;
     }
@@ -438,8 +455,8 @@
     .variable-name-popup-content {
         position: fixed;
         left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
+        top: 30%;
+        transform: translate(-50%, -30%);
         width: calc(100svw - 40px);
         max-width: 95svw;
         margin: 0;
@@ -476,12 +493,14 @@
 /* 매우 작은 화면 (스마트폰 세로) */
 @media (max-width: 480px) {
     .direction-popup-content {
-        top: 10px;
+        top: max(50px, env(safe-area-inset-top, 0px) + 15px);
         width: calc(100svw - 20px);
-        max-height: calc(100svh - 20px);
+        max-height: calc(100svh - max(70px, env(safe-area-inset-top, 0px) + 35px));
     }
     
     .variable-name-popup-content {
+        top: 25%;
+        transform: translate(-50%, -25%);
         width: calc(100svw - 20px);
     }
     
