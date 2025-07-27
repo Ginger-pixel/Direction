@@ -200,6 +200,9 @@ function renderTabContent(template) {
     
     const editorHtml = `
         <div class="placeholder-editor">
+            <div class="placeholder-variable-row">
+                <div class="placeholder-variable-display">{{${placeholder.variable}}}</div>
+            </div>
             <div class="placeholder-title-row">
                 <input type="text" 
                        class="placeholder-title-input" 
@@ -209,9 +212,6 @@ function renderTabContent(template) {
                 <button class="placeholder-delete-btn" data-index="${selectedTabIndex}" title="플레이스홀더 삭제">
                     <i class="fa-solid fa-trash"></i>
                 </button>
-            </div>
-            <div class="placeholder-variable-row">
-                <div class="placeholder-variable-display">{{${placeholder.variable}}}</div>
             </div>
             <div class="placeholder-content-area">
                 <textarea class="placeholder-textarea" 
