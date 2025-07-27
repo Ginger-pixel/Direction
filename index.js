@@ -186,6 +186,28 @@ function applyPlaceholderToSystem(placeholder) {
     }
 }
 
+// 시스템에서 플레이스홀더 제거
+function removePlaceholderFromSystem(placeholder) {
+    if (placeholder.variable && placeholder.variable.trim()) {
+        const variableName = placeholder.variable.trim();
+        
+        // 전역 변수 제거
+        if (window[`${variableName}Value`]) {
+            delete window[`${variableName}Value`];
+            console.log(`전역 변수 제거됨: ${variableName}Value`);
+        }
+        
+        // getContext를 통한 제거 시도
+        const context = getContext();
+        if (context && context.setExtensionPrompt) {
+            context.setExtensionPrompt(`${extensionName}_${variableName}`, "", 1, 0);
+            console.log(`컨텍스트에서 제거됨: ${extensionName}_${variableName}`);
+        }
+        
+        console.log(`플레이스홀더 시스템에서 제거됨: {{${variableName}}}`);
+    }
+}
+
 // 플레이스홀더 제거
 function removePlaceholder(itemId) {
     const placeholders = extension_settings[extensionName].placeholders;
@@ -194,9 +216,20 @@ function removePlaceholder(itemId) {
         return;
     }
     
+    // 삭제할 플레이스홀더 찾기
+    const placeholderToRemove = placeholders.find(p => p.id === itemId);
+    
+    // 시스템에서 먼저 제거
+    if (placeholderToRemove) {
+        removePlaceholderFromSystem(placeholderToRemove);
+    }
+    
+    // 배열에서 제거
     extension_settings[extensionName].placeholders = placeholders.filter(p => p.id !== itemId);
     refreshPlaceholdersContainer();
     saveSettingsDebounced();
+    
+    console.log(`플레이스홀더 완전 제거 완료: ${placeholderToRemove?.variable || 'unknown'}`);
 }
 
 // 플레이스홀더 내용 지우기
@@ -206,6 +239,11 @@ function cleanPlaceholder(itemId) {
         placeholder.content = "";
         $(`[data-id="${itemId}"] .placeholder-textarea`).val("");
         saveSettingsDebounced();
+        
+        // 내용만 지우고 변수는 유지하되, 빈 값으로 시스템에 적용
+        if (placeholder.variable && placeholder.variable.trim()) {
+            applyPlaceholderToSystem(placeholder);
+        }
     }
 }
 
