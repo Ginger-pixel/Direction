@@ -130,7 +130,7 @@
     padding: 8px 12px;
     border: 1px solid var(--SmartThemeBorderColor);
     border-radius: 5px;
-    background-color: var(--SmartThemeBlurTintColor);
+    background-color: var(--black30a);
     color: var(--SmartThemeBodyColor);
     font-size: var(--mainFontSize);
     transition: all 0.2s ease;
@@ -190,7 +190,7 @@
     padding: 12px;
     border: 1px solid var(--SmartThemeBorderColor);
     border-radius: 5px;
-    background-color: var(--SmartThemeBlurTintColor);
+    background-color: var(--black30a);
     color: var(--SmartThemeBodyColor);
     font-family: inherit;
     font-size: var(--mainFontSize);
@@ -209,20 +209,6 @@
 .placeholder-textarea::placeholder {
     color: var(--grey30);
     opacity: 0.7;
-}
-
-/* 플레이스홀더 미리보기 */
-.placeholder-preview {
-    position: absolute;
-    top: 5px;
-    right: 10px;
-    background-color: var(--SmartThemeQuoteColor);
-    color: var(--SmartThemeBodyColor);
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: calc(var(--mainFontSize) * 0.85);
-    font-family: monospace;
-    opacity: 0.8;
 }
 
 /* 버튼 컨테이너 */

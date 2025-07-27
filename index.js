@@ -68,16 +68,15 @@ function renderPlaceholders() {
     return placeholders.map(placeholder => `
         <div class="placeholder-item" data-id="${placeholder.id}">
             <div class="placeholder-row">
-                <input type="text" placeholder="이름" class="placeholder-name" value="${placeholder.name}">
+                <input type="text" placeholder="제목" class="placeholder-name" value="${placeholder.name}">
                 <input type="text" placeholder="변수명" class="placeholder-variable" value="${placeholder.variable}">
                 <div class="placeholder-buttons">
                     <button class="clean-placeholder" title="내용 제거">Clean</button>
-                    <button class="remove-placeholder" title="플레이스홀더 삭제">삭제</button>
+                    <button class="remove-placeholder" title="플레이스홀더 삭제">Delete</button>
                 </div>
             </div>
             <div class="placeholder-content">
                 <textarea placeholder="여기에 내용을 입력하세요" class="placeholder-textarea">${placeholder.content}</textarea>
-                <div class="placeholder-preview">{{${placeholder.variable || 'variable'}}}</div>
             </div>
         </div>
     `).join('');
@@ -157,9 +156,6 @@ function updatePlaceholder(itemId) {
         placeholder.name = item.find('.placeholder-name').val();
         placeholder.variable = item.find('.placeholder-variable').val();
         placeholder.content = item.find('.placeholder-textarea').val();
-        
-        // 변수명 미리보기 업데이트
-        item.find('.placeholder-preview').text(`{{${placeholder.variable || 'variable'}}}`);
         
         saveSettingsDebounced();
         updateAllPlaceholders();
