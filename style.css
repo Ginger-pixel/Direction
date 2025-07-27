@@ -1,13 +1,20 @@
 /* Direction 확장 스타일 - 탭 기반 플레이스홀더 관리 */
 
+/* 전체 박스 사이징 */
+#placeholderPanel,
+#placeholderPanel * {
+    box-sizing: border-box;
+}
+
 /* 메인 패널 */
 #placeholderPanel {
     display: none;
+    overflow-x: hidden;
     overflow-y: auto;
     max-width: 90svw;
     max-height: 90svh;
-    min-width: 500px;
-    min-height: 400px;
+    min-width: 100px;
+    min-height: 50px;
     border-radius: 10px;
     border: 1px solid var(--SmartThemeBorderColor);
     position: fixed;
@@ -17,7 +24,7 @@
     z-index: 3000;
     left: 50%;
     top: 50%;
-    transform: translate(-50%, -50%) scale(0.95);
+    transform: translate(-50%, -50%);
     width: 700px;
     height: 500px;
     opacity: 0;
@@ -28,7 +35,6 @@
 #placeholderPanel.flex {
     display: flex;
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
 }
 
 /* 패널 헤더 */
@@ -77,6 +83,7 @@
     margin: 0;
     padding: 0;
     list-style: none;
+    overflow-x: hidden;
 }
 
 /* 개별 탭 */
@@ -134,6 +141,7 @@
     border-top: none;
     padding: 20px;
     height: 380px;
+    overflow-x: hidden;
     overflow-y: auto;
 }
 
@@ -209,6 +217,7 @@
     flex: 1;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 .placeholder-textarea {
@@ -225,6 +234,8 @@
     transition: all 0.2s ease;
     line-height: 1.5;
     min-height: 250px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .placeholder-textarea:focus {
@@ -311,8 +322,12 @@
 /* 반응형 디자인 */
 @media (max-width: 800px) {
     #placeholderPanel {
-        width: 95svw;
-        height: 85svh;
+        width: calc(100svw - 20px);
+        height: calc(100svh - 40px);
+        left: 10px;
+        top: 20px;
+        max-width: none;
+        max-height: none;
     }
     
     .placeholder-header-row {
@@ -334,18 +349,28 @@
     .placeholder-textarea {
         min-height: 200px;
     }
+    
+    .placeholder-tab-content {
+        height: 300px;
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
 }
 
 @media (max-width: 480px) {
     #placeholderPanel {
-        width: calc(100svw - 20px);
-        height: calc(100svh - 40px);
-        min-width: 300px;
-        min-height: 400px;
+        width: calc(100svw - 10px);
+        height: calc(100svh - 20px);
+        left: 5px;
+        top: 10px;
+        padding: 5px;
     }
     
     .placeholder-tab-content {
-        padding: 15px;
+        padding: 10px;
+        height: 250px;
+        overflow-x: hidden;
+        overflow-y: auto;
     }
     
     .placeholder-tab {
@@ -355,5 +380,10 @@
     
     .placeholder-textarea {
         min-height: 150px;
+    }
+    
+    .panelControlBar {
+        padding: 5px;
+        margin: -5px -5px 5px -5px;
     }
 } 
