@@ -1,4 +1,4 @@
-// Direction 확장 - 다중 플레이스홀더 관리
+// Direction 확장 - 탭 기반 플레이스홀더 관리
 import { extension_settings, getContext, loadExtensionSettings, renderExtensionTemplateAsync } from "../../../extensions.js";
 import { saveSettingsDebounced } from "../../../../script.js";
 import { SlashCommand } from "../../../slash-commands/SlashCommand.js";
@@ -38,6 +38,9 @@ const RESERVED_WORDS = [
     'getvar', 'setvar', 'addvar', 'incvar', 'decvar', 'getglobalvar', 'setglobalvar',
     'addglobalvar', 'incglobalvar', 'decglobalvar', 'var'
 ];
+
+// 현재 선택된 탭 인덱스
+let selectedTabIndex = 0;
 
 // 설정 로드
 async function loadSettings() {
@@ -107,7 +110,7 @@ async function showVariableNamePopup() {
         // 새 플레이스홀더 생성
         const newPlaceholder = { 
             id: generateId(), 
-            name: "", 
+            name: "새 플레이스홀더", 
             variable: variableName, 
             content: "" 
         };
@@ -124,14 +127,13 @@ async function showVariableNamePopup() {
     return true;
 }
 
-
-
 // 플레이스홀더 창 열기
 async function openDirectionPopup() {
     const template = $(await renderExtensionTemplateAsync(`third-party/${extensionName}`, 'template'));
     
-    // 플레이스홀더 목록 렌더링
-    template.find('#placeholders-container').html(renderPlaceholders());
+    // 탭과 내용 렌더링
+    renderTabs(template);
+    renderTabContent(template);
     
     // 이벤트 리스너 추가
     setupEventListeners(template);
@@ -146,73 +148,179 @@ async function openDirectionPopup() {
     const result = await popup.show();
     
     if (result) {
-        // 저장 처리는 실시간으로 이미 적용되므로 별도 처리 불필요
         console.log("플레이스홀더 설정이 저장되었습니다.");
     }
 }
 
-// 플레이스홀더들을 HTML로 렌더링
-function renderPlaceholders() {
+// 탭 목록 렌더링
+function renderTabs(template) {
     const placeholders = extension_settings[extensionName].placeholders || [];
+    const tabList = template.find('#placeholder-tab-list');
     
-    // 플레이스홀더가 없을 때 안내 메시지 표시
-    if (placeholders.length === 0) {
-        return `
-            <div class="no-placeholders-message">
-                <p>아직 생성된 플레이스홀더가 없습니다.</p>
-                <p>"추가" 버튼을 클릭하여 새로운 플레이스홀더를 만들어보세요.</p>
+    let tabsHtml = '';
+    
+    // 각 플레이스홀더에 대한 탭 생성
+    placeholders.forEach((placeholder, index) => {
+        const isActive = index === selectedTabIndex;
+        const displayName = placeholder.name || `{{${placeholder.variable}}}`;
+        tabsHtml += `
+            <div class="placeholder-tab ${isActive ? 'active' : ''}" data-index="${index}" title="${displayName}">
+                ${displayName}
             </div>
         `;
+    });
+    
+    // + 탭 추가
+    tabsHtml += `
+        <div class="placeholder-tab add-tab" data-action="add" title="새 플레이스홀더 추가">
+            <i class="fa-solid fa-plus"></i>
+        </div>
+    `;
+    
+    tabList.html(tabsHtml);
+}
+
+// 탭 내용 렌더링
+function renderTabContent(template) {
+    const placeholders = extension_settings[extensionName].placeholders || [];
+    const contentArea = template.find('#placeholder-tab-content');
+    
+    if (placeholders.length === 0 || selectedTabIndex >= placeholders.length) {
+        // 플레이스홀더가 없거나 선택된 탭이 범위를 벗어난 경우
+        contentArea.html(`
+            <div class="no-placeholders-message">
+                <h3>+ 버튼을 클릭하여 새로운 플레이스홀더를 만들어보세요.</h3>
+                <p>플레이스홀더를 사용하면 반복되는 텍스트를 효율적으로 관리할 수 있습니다.</p>
+            </div>
+        `);
+        return;
     }
     
-    return placeholders.map(placeholder => `
-        <div class="placeholder-item" data-id="${placeholder.id}">
-            <div class="placeholder-row">
-                <input type="text" placeholder="제목" class="placeholder-name" value="${placeholder.name}">
-                <input type="text" class="placeholder-variable" value="${placeholder.variable}" readonly>
-                <div class="placeholder-buttons">
-                    <button class="clean-placeholder" title="내용 제거">Clean</button>
-                    <button class="remove-placeholder" title="플레이스홀더 삭제">Delete</button>
-                </div>
+    const placeholder = placeholders[selectedTabIndex];
+    
+    const editorHtml = `
+        <div class="placeholder-editor">
+            <div class="placeholder-header-row">
+                <input type="text" 
+                       class="placeholder-title-input" 
+                       placeholder="플레이스홀더 제목을 입력하세요" 
+                       value="${placeholder.name}"
+                       data-index="${selectedTabIndex}">
+                <div class="placeholder-variable-display">{{${placeholder.variable}}}</div>
+                <button class="placeholder-delete-btn" data-index="${selectedTabIndex}" title="플레이스홀더 삭제">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
             </div>
-            <div class="placeholder-content">
-                <textarea placeholder="여기에 내용을 입력하세요" class="placeholder-textarea">${placeholder.content}</textarea>
+            <div class="placeholder-content-area">
+                <textarea class="placeholder-textarea" 
+                          placeholder="여기에 내용을 입력하세요..." 
+                          data-index="${selectedTabIndex}">${placeholder.content}</textarea>
             </div>
         </div>
-    `).join('');
+    `;
+    
+    contentArea.html(editorHtml);
+}
+
+// 탭 선택
+function selectTab(template, index) {
+    const placeholders = extension_settings[extensionName].placeholders || [];
+    
+    if (index >= 0 && index < placeholders.length) {
+        selectedTabIndex = index;
+        renderTabs(template);
+        renderTabContent(template);
+        setupEventListeners(template);
+    }
 }
 
 // 이벤트 리스너 설정
 function setupEventListeners(template) {
-    // 새 플레이스홀더 추가 (변수명 입력 팝업 표시)
-    template.find("#add-new-placeholder").on("click", async function() {
+    // 탭 클릭 이벤트
+    template.find('.placeholder-tab:not(.add-tab)').off('click').on('click', function() {
+        const index = parseInt($(this).data('index'));
+        selectTab(template, index);
+    });
+    
+    // + 탭 클릭 이벤트
+    template.find('.placeholder-tab.add-tab').off('click').on('click', async function() {
         const success = await showVariableNamePopup();
         if (success) {
-            // UI 새로고침
-            template.find('#placeholders-container').html(renderPlaceholders());
-            setupEventListeners(template); // 이벤트 리스너 재설정
+            // 새로 추가된 플레이스홀더로 이동
+            selectedTabIndex = extension_settings[extensionName].placeholders.length - 1;
+            renderTabs(template);
+            renderTabContent(template);
+            setupEventListeners(template);
         }
     });
     
-    // 각 플레이스홀더 항목의 이벤트
-    template.find(".remove-placeholder").on("click", function() {
-        const itemId = $(this).closest('.placeholder-item').data('id');
-        removePlaceholder(itemId);
-        // UI 새로고침
-        template.find('#placeholders-container').html(renderPlaceholders());
-        setupEventListeners(template); // 이벤트 리스너 재설정
+    // 제목 입력 필드 변경 이벤트
+    template.find('.placeholder-title-input').off('input').on('input', function() {
+        const index = parseInt($(this).data('index'));
+        const newTitle = $(this).val();
+        updatePlaceholderTitle(index, newTitle);
+        // 탭 제목 즉시 업데이트
+        renderTabs(template);
+        setupEventListeners(template);
     });
     
-    template.find(".clean-placeholder").on("click", function() {
-        const itemId = $(this).closest('.placeholder-item').data('id');
-        cleanPlaceholder(itemId);
+    // 내용 텍스트 에리어 변경 이벤트
+    template.find('.placeholder-textarea').off('input').on('input', function() {
+        const index = parseInt($(this).data('index'));
+        const newContent = $(this).val();
+        updatePlaceholderContent(index, newContent);
     });
     
-    // 입력 필드 변경 감지 (실시간 시스템 적용)
-    template.find(".placeholder-name, .placeholder-textarea").on("input", function() {
-        const itemId = $(this).closest('.placeholder-item').data('id');
-        updatePlaceholderAndApply(itemId);
+    // 삭제 버튼 클릭 이벤트
+    template.find('.placeholder-delete-btn').off('click').on('click', function() {
+        const index = parseInt($(this).data('index'));
+        if (confirm('이 플레이스홀더를 삭제하시겠습니까?')) {
+            deletePlaceholder(template, index);
+        }
     });
+}
+
+// 플레이스홀더 제목 업데이트
+function updatePlaceholderTitle(index, newTitle) {
+    const placeholders = extension_settings[extensionName].placeholders;
+    if (placeholders && placeholders[index]) {
+        placeholders[index].name = newTitle;
+        saveSettingsDebounced();
+    }
+}
+
+// 플레이스홀더 내용 업데이트
+function updatePlaceholderContent(index, newContent) {
+    const placeholders = extension_settings[extensionName].placeholders;
+    if (placeholders && placeholders[index]) {
+        placeholders[index].content = newContent;
+        applyPlaceholderToSystem(placeholders[index]);
+        saveSettingsDebounced();
+    }
+}
+
+// 플레이스홀더 삭제
+function deletePlaceholder(template, index) {
+    const placeholders = extension_settings[extensionName].placeholders;
+    if (placeholders && placeholders[index]) {
+        // 시스템에서 제거
+        removePlaceholderFromSystem(placeholders[index]);
+        
+        // 배열에서 제거
+        placeholders.splice(index, 1);
+        
+        // 선택된 탭 인덱스 조정
+        if (selectedTabIndex >= placeholders.length) {
+            selectedTabIndex = Math.max(0, placeholders.length - 1);
+        }
+        
+        // UI 업데이트
+        renderTabs(template);
+        renderTabContent(template);
+        setupEventListeners(template);
+        
+        saveSettingsDebounced();
+    }
 }
 
 // 플레이스홀더를 시스템에 적용
@@ -254,52 +362,6 @@ function removePlaceholderFromSystem(placeholder) {
         }
     }
 }
-
-// 플레이스홀더 제거
-function removePlaceholder(itemId) {
-    // 삭제할 플레이스홀더 찾기
-    const placeholderToRemove = extension_settings[extensionName].placeholders.find(p => p.id === itemId);
-    
-    // 시스템에서 먼저 제거
-    if (placeholderToRemove) {
-        removePlaceholderFromSystem(placeholderToRemove);
-    }
-    
-    // 배열에서 제거
-    extension_settings[extensionName].placeholders = extension_settings[extensionName].placeholders.filter(p => p.id !== itemId);
-    saveSettingsDebounced();
-}
-
-// 플레이스홀더 내용 지우기
-function cleanPlaceholder(itemId) {
-    const placeholder = extension_settings[extensionName].placeholders.find(p => p.id === itemId);
-    if (placeholder) {
-        placeholder.content = "";
-        $(`[data-id="${itemId}"] .placeholder-textarea`).val("");
-        saveSettingsDebounced();
-        
-        // 빈 값으로 시스템에 적용
-        applyPlaceholderToSystem(placeholder);
-    }
-}
-
-// 플레이스홀더 업데이트 및 실시간 시스템 적용
-function updatePlaceholderAndApply(itemId) {
-    const item = $(`[data-id="${itemId}"]`);
-    const placeholder = extension_settings[extensionName].placeholders.find(p => p.id === itemId);
-    
-    if (placeholder) {
-        placeholder.name = item.find('.placeholder-name').val();
-        placeholder.content = item.find('.placeholder-textarea').val();
-        
-        // 즉시 시스템에 적용
-        applyPlaceholderToSystem(placeholder);
-        
-        saveSettingsDebounced();
-    }
-}
-
-
 
 // 모든 플레이스홀더 값 업데이트 (초기 로드용)
 function updateAllPlaceholders() {
