@@ -1,82 +1,85 @@
-/* Direction 확장 스타일 - 탭 기반 플레이스홀더 관리 */
+/* Direction 확장 스타일 - 드롭다운 기반 플레이스홀더 관리 */
 
-/* 탭 컨테이너 */
-.placeholder-tabs {
-    margin: 10px 0;
-}
-
-/* 탭 목록 */
-.placeholder-tab-list {
+/* 플레이스홀더 제어 영역 */
+.placeholder-controls {
     display: flex;
-    flex-wrap: wrap;
-    border-bottom: 1px solid var(--SmartThemeBorderColor);
-    margin: 0;
-    padding: 0;
-    list-style: none;
+    gap: 12px;
+    margin-bottom: 20px;
+    align-items: center;
 }
 
-/* 개별 탭 */
-.placeholder-tab {
-    background: var(--SmartThemeBlurTintColor);
+/* 플레이스홀더 드롭다운 */
+.placeholder-dropdown {
+    flex: 1;
+    padding: 10px 12px;
     border: 1px solid var(--SmartThemeBorderColor);
-    border-bottom: none;
-    border-radius: 5px 5px 0 0;
-    padding: 8px 16px;
-    margin-right: 2px;
+    border-radius: 5px;
+    background-color: var(--SmartThemeBlurTintColor);
+    color: var(--SmartThemeBodyColor);
+    font-family: inherit;
+    font-size: var(--mainFontSize);
     cursor: pointer;
-    color: var(--SmartThemeBodyColor);
-    font-size: calc(var(--mainFontSize) * 0.9);
     transition: all 0.2s ease;
-    white-space: nowrap;
-    max-width: 120px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    user-select: none;
 }
 
-.placeholder-tab:hover {
-    filter: brightness(1.2) contrast(0.6);
+.placeholder-dropdown:focus {
+    outline: none;
+    border-color: var(--SmartThemeQuoteColor);
+    box-shadow: 0 0 0 2px rgba(var(--SmartThemeQuoteColorRGB), 0.3);
 }
 
-.placeholder-tab.active {
-    background: var(--SmartThemeQuoteColor);
-    border-color: var(--SmartThemeBorderColor);
-    color: var(--SmartThemeBodyColor);
-    position: relative;
-    z-index: 1;
-}
-
-/* + 탭 (새 플레이스홀더 추가) */
-.placeholder-tab.add-tab {
-    background: var(--SmartThemeBlurTintColor);
+/* 새 플레이스홀더 추가 버튼 */
+.add-placeholder-btn {
+    padding: 10px 16px;
+    background-color: var(--SmartThemeQuoteColor);
     border: 1px solid var(--SmartThemeBorderColor);
-    border-bottom: none;
-    padding: 8px 12px;
-    color: var(--SmartThemeQuoteColor);
-    font-size: 16px;
-    min-width: auto;
-    max-width: none;
-}
-
-.placeholder-tab.add-tab:hover {
-    background: var(--SmartThemeQuoteColor);
+    border-radius: 5px;
     color: var(--SmartThemeBodyColor);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: var(--mainFontSize);
+    font-weight: 500;
+    white-space: nowrap;
 }
 
-/* 탭 내용 영역 */
-.placeholder-tab-content {
+.add-placeholder-btn:hover {
+    background-color: var(--SmartThemeQuoteColor);
+    filter: brightness(1.2);
+    transform: translateY(-1px);
+}
+
+/* 편집 영역 */
+.placeholder-editor-area {
     background: transparent;
-    border: none;
-    padding: 15px 0;
-    min-height: 400px;
+    padding: 0;
     overflow-y: auto;
 }
 
-/* 플레이스홀더 편집 영역 */
+/* 플레이스홀더 편집기 */
 .placeholder-editor {
     display: flex;
     flex-direction: column;
     height: 100%;
+}
+
+/* 변수명 표시 행 */
+.placeholder-variable-row {
+    margin-bottom: 10px;
+    text-align: left;
+}
+
+.placeholder-variable-display {
+    display: inline-block;
+    padding: 8px 12px;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 5px;
+    background-color: var(--black50a);
+    color: var(--SmartThemeQuoteColor);
+    font-family: 'Courier New', monospace;
+    font-size: calc(var(--mainFontSize) * 0.9);
+    cursor: not-allowed;
+    opacity: 0.8;
+    margin-left: 0;
 }
 
 /* 제목과 삭제 버튼 행 */
@@ -85,12 +88,6 @@
     align-items: center;
     gap: 10px;
     margin-bottom: 10px;
-}
-
-/* 변수명 표시 행 */
-.placeholder-variable-row {
-    margin-bottom: 10px;
-    text-align: left;
 }
 
 .placeholder-title-input {
@@ -109,20 +106,6 @@
     outline: none;
     border-color: var(--SmartThemeQuoteColor);
     box-shadow: 0 0 0 2px rgba(var(--SmartThemeQuoteColorRGB), 0.3);
-}
-
-.placeholder-variable-display {
-    display: inline-block;
-    padding: 8px 12px;
-    border: 1px solid var(--SmartThemeBorderColor);
-    border-radius: 5px;
-    background-color: var(--black50a);
-    color: var(--SmartThemeQuoteColor);
-    font-family: 'Courier New', monospace;
-    font-size: calc(var(--mainFontSize) * 0.9);
-    cursor: not-allowed;
-    opacity: 0.8;
-    margin-left: 0;
 }
 
 .placeholder-delete-btn {
@@ -228,26 +211,36 @@
 }
 
 /* 스크롤바 스타일 */
-.placeholder-tab-content::-webkit-scrollbar {
+.placeholder-editor-area::-webkit-scrollbar {
     width: 8px;
 }
 
-.placeholder-tab-content::-webkit-scrollbar-track {
+.placeholder-editor-area::-webkit-scrollbar-track {
     background: var(--black30a);
     border-radius: 4px;
 }
 
-.placeholder-tab-content::-webkit-scrollbar-thumb {
+.placeholder-editor-area::-webkit-scrollbar-thumb {
     background: var(--SmartThemeBorderColor);
     border-radius: 4px;
 }
 
-.placeholder-tab-content::-webkit-scrollbar-thumb:hover {
+.placeholder-editor-area::-webkit-scrollbar-thumb:hover {
     background: var(--SmartThemeQuoteColor);
 }
 
 /* 반응형 디자인 */
 @media (max-width: 600px) {
+    .placeholder-controls {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .placeholder-dropdown,
+    .add-placeholder-btn {
+        width: 100%;
+    }
+    
     .placeholder-title-row {
         /* 모바일에서도 가로 정렬 유지 */
         flex-direction: row;
@@ -259,27 +252,12 @@
         flex: 1;
     }
     
-    .placeholder-tab {
-        max-width: 80px;
-        padding: 6px 12px;
-        font-size: calc(var(--mainFontSize) * 0.8);
-    }
-    
     .placeholder-textarea {
         min-height: 200px;
     }
 }
 
 @media (max-width: 480px) {
-    .placeholder-tab-content {
-        padding: 10px 0;
-    }
-    
-    .placeholder-tab {
-        max-width: 60px;
-        padding: 4px 8px;
-    }
-    
     .placeholder-textarea {
         min-height: 150px;
     }

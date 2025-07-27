@@ -1,4 +1,4 @@
-// Direction 확장 - 탭 기반 플레이스홀더 관리
+// Direction 확장 - 드롭다운 기반 플레이스홀더 관리
 import { extension_settings, getContext, loadExtensionSettings, renderExtensionTemplateAsync } from "../../../extensions.js";
 import { saveSettingsDebounced } from "../../../../script.js";
 import { SlashCommand } from "../../../slash-commands/SlashCommand.js";
@@ -39,8 +39,8 @@ const RESERVED_WORDS = [
     'addglobalvar', 'incglobalvar', 'decglobalvar', 'var'
 ];
 
-// 현재 선택된 탭 인덱스
-let selectedTabIndex = 0;
+// 현재 선택된 플레이스홀더 인덱스
+let selectedPlaceholderIndex = -1;
 
 // 설정 로드
 async function loadSettings() {
@@ -131,9 +131,9 @@ async function showVariableNamePopup() {
 async function openDirectionPopup() {
     const template = $(await renderExtensionTemplateAsync(`third-party/${extensionName}`, 'template'));
     
-    // 탭과 내용 렌더링
-    renderTabs(template);
-    renderTabContent(template);
+    // 드롭다운과 편집 영역 렌더링
+    renderDropdown(template);
+    renderEditorArea(template);
     
     // 이벤트 리스너 추가
     setupEventListeners(template);
@@ -152,51 +152,39 @@ async function openDirectionPopup() {
     }
 }
 
-// 탭 목록 렌더링
-function renderTabs(template) {
+// 드롭다운 렌더링
+function renderDropdown(template) {
     const placeholders = extension_settings[extensionName].placeholders || [];
-    const tabList = template.find('#placeholder-tab-list');
+    const dropdown = template.find('#placeholder-selector');
     
-    let tabsHtml = '';
+    // 기본 옵션 설정
+    dropdown.html('<option value="">플레이스홀더를 선택하세요</option>');
     
-    // 각 플레이스홀더에 대한 탭 생성
+    // 각 플레이스홀더 옵션 추가
     placeholders.forEach((placeholder, index) => {
-        const isActive = index === selectedTabIndex;
         const displayName = placeholder.name || `{{${placeholder.variable}}}`;
-        tabsHtml += `
-            <div class="placeholder-tab ${isActive ? 'active' : ''}" data-index="${index}" title="${displayName}">
-                ${displayName}
-            </div>
-        `;
+        const isSelected = index === selectedPlaceholderIndex;
+        dropdown.append(`<option value="${index}" ${isSelected ? 'selected' : ''}>${displayName}</option>`);
     });
-    
-    // + 탭 추가
-    tabsHtml += `
-        <div class="placeholder-tab add-tab" data-action="add" title="새 플레이스홀더 추가">
-            <i class="fa-solid fa-plus"></i>
-        </div>
-    `;
-    
-    tabList.html(tabsHtml);
 }
 
-// 탭 내용 렌더링
-function renderTabContent(template) {
+// 편집 영역 렌더링
+function renderEditorArea(template) {
     const placeholders = extension_settings[extensionName].placeholders || [];
-    const contentArea = template.find('#placeholder-tab-content');
+    const editorArea = template.find('#placeholder-editor-area');
     
-    if (placeholders.length === 0 || selectedTabIndex >= placeholders.length) {
-        // 플레이스홀더가 없거나 선택된 탭이 범위를 벗어난 경우
-        contentArea.html(`
+    if (placeholders.length === 0 || selectedPlaceholderIndex < 0 || selectedPlaceholderIndex >= placeholders.length) {
+        // 플레이스홀더가 없거나 선택되지 않은 경우
+        editorArea.html(`
             <div class="no-placeholders-message">
-                <h3>+ 버튼을 클릭하여 새로운 플레이스홀더를 만들어보세요.</h3>
-                <p>플레이스홀더를 사용하면 반복되는 텍스트를 효율적으로 관리할 수 있습니다.</p>
+                <h3>"+ 새 플레이스홀더" 버튼을 클릭하여 시작하세요.</h3>
+                <p>플레이스홀더를 생성한 후 드롭다운에서 선택하여 편집할 수 있습니다.</p>
             </div>
         `);
         return;
     }
     
-    const placeholder = placeholders[selectedTabIndex];
+    const placeholder = placeholders[selectedPlaceholderIndex];
     
     const editorHtml = `
         <div class="placeholder-editor">
@@ -208,50 +196,40 @@ function renderTabContent(template) {
                        class="placeholder-title-input" 
                        placeholder="플레이스홀더 제목을 입력하세요" 
                        value="${placeholder.name}"
-                       data-index="${selectedTabIndex}">
-                <button class="placeholder-delete-btn" data-index="${selectedTabIndex}" title="플레이스홀더 삭제">
+                       data-index="${selectedPlaceholderIndex}">
+                <button class="placeholder-delete-btn" data-index="${selectedPlaceholderIndex}" title="플레이스홀더 삭제">
                     <i class="fa-solid fa-trash"></i>
                 </button>
             </div>
             <div class="placeholder-content-area">
                 <textarea class="placeholder-textarea" 
                           placeholder="여기에 내용을 입력하세요..." 
-                          data-index="${selectedTabIndex}">${placeholder.content}</textarea>
+                          data-index="${selectedPlaceholderIndex}">${placeholder.content}</textarea>
             </div>
         </div>
     `;
     
-    contentArea.html(editorHtml);
-}
-
-// 탭 선택
-function selectTab(template, index) {
-    const placeholders = extension_settings[extensionName].placeholders || [];
-    
-    if (index >= 0 && index < placeholders.length) {
-        selectedTabIndex = index;
-        renderTabs(template);
-        renderTabContent(template);
-        setupEventListeners(template);
-    }
+    editorArea.html(editorHtml);
 }
 
 // 이벤트 리스너 설정
 function setupEventListeners(template) {
-    // 탭 클릭 이벤트
-    template.find('.placeholder-tab:not(.add-tab)').off('click').on('click', function() {
-        const index = parseInt($(this).data('index'));
-        selectTab(template, index);
+    // 드롭다운 선택 이벤트
+    template.find('#placeholder-selector').off('change').on('change', function() {
+        const selectedValue = $(this).val();
+        selectedPlaceholderIndex = selectedValue === '' ? -1 : parseInt(selectedValue);
+        renderEditorArea(template);
+        setupEventListeners(template);
     });
     
-    // + 탭 클릭 이벤트
-    template.find('.placeholder-tab.add-tab').off('click').on('click', async function() {
+    // 새 플레이스홀더 추가 버튼
+    template.find('#add-new-placeholder').off('click').on('click', async function() {
         const success = await showVariableNamePopup();
         if (success) {
-            // 새로 추가된 플레이스홀더로 이동
-            selectedTabIndex = extension_settings[extensionName].placeholders.length - 1;
-            renderTabs(template);
-            renderTabContent(template);
+            // 새로 추가된 플레이스홀더를 선택
+            selectedPlaceholderIndex = extension_settings[extensionName].placeholders.length - 1;
+            renderDropdown(template);
+            renderEditorArea(template);
             setupEventListeners(template);
         }
     });
@@ -261,8 +239,8 @@ function setupEventListeners(template) {
         const index = parseInt($(this).data('index'));
         const newTitle = $(this).val();
         updatePlaceholderTitle(index, newTitle);
-        // 탭 제목 즉시 업데이트
-        renderTabs(template);
+        // 드롭다운 옵션 즉시 업데이트
+        renderDropdown(template);
         setupEventListeners(template);
     });
     
@@ -311,14 +289,18 @@ function deletePlaceholder(template, index) {
         // 배열에서 제거
         placeholders.splice(index, 1);
         
-        // 선택된 탭 인덱스 조정
-        if (selectedTabIndex >= placeholders.length) {
-            selectedTabIndex = Math.max(0, placeholders.length - 1);
+        // 선택된 인덱스 조정
+        if (selectedPlaceholderIndex >= placeholders.length) {
+            selectedPlaceholderIndex = Math.max(-1, placeholders.length - 1);
+        } else if (selectedPlaceholderIndex === index) {
+            selectedPlaceholderIndex = -1; // 현재 선택된 항목이 삭제된 경우
+        } else if (selectedPlaceholderIndex > index) {
+            selectedPlaceholderIndex--; // 앞의 항목이 삭제된 경우 인덱스 조정
         }
         
         // UI 업데이트
-        renderTabs(template);
-        renderTabContent(template);
+        renderDropdown(template);
+        renderEditorArea(template);
         setupEventListeners(template);
         
         saveSettingsDebounced();
