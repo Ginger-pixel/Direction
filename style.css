@@ -1,4 +1,4 @@
-/* Direction 확장 스타일 - 다중 플레이스홀더 시스템 */
+/* Direction 확장 스타일 - 심플한 플레이스홀더 시스템 */
 
 /* 팝업 오버레이 */
 .direction-popup {
@@ -53,7 +53,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px;
+    padding: 10px 20px;
     border-bottom: 1px solid var(--SmartThemeBorderColor);
     background-color: #4a4a4a;
     flex-shrink: 0;
@@ -106,34 +106,23 @@
 
 /* 개별 플레이스홀더 항목 */
 .placeholder-item {
-    margin-bottom: 25px;
-    border: 1px solid var(--SmartThemeBorderColor);
-    border-radius: 8px;
-    overflow: hidden;
-    background-color: var(--black30a);
-    transition: all 0.2s ease;
-}
-
-.placeholder-item:hover {
-    border-color: var(--SmartThemeQuoteColor);
-    box-shadow: 0 2px 8px var(--black30a);
-}
-
-/* 플레이스홀더 헤더 */
-.placeholder-header {
-    background-color: #3a3a3a;
-    padding: 15px;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
     border-bottom: 1px solid var(--SmartThemeBorderColor);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 15px;
 }
 
-.placeholder-inputs {
+.placeholder-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+/* 플레이스홀더 첫 번째 행 (이름, 변수명, 버튼들) */
+.placeholder-row {
     display: flex;
     gap: 10px;
-    flex: 1;
+    align-items: center;
+    margin-bottom: 10px;
 }
 
 .placeholder-name, .placeholder-variable {
@@ -164,8 +153,7 @@
     gap: 5px;
 }
 
-.add-placeholder, .remove-placeholder, .clean-placeholder {
-    width: 32px;
+.clean-placeholder, .remove-placeholder {
     height: 32px;
     border: 1px solid var(--SmartThemeBorderColor);
     border-radius: 5px;
@@ -176,12 +164,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
-    font-weight: bold;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 0 12px;
 }
 
-.add-placeholder:hover {
-    background-color: #2d5016;
+.clean-placeholder:hover {
+    background-color: #3a3a5a;
     transform: scale(1.05);
 }
 
@@ -190,20 +179,8 @@
     transform: scale(1.05);
 }
 
-.clean-placeholder {
-    font-size: 11px;
-    font-weight: 500;
-    width: 50px;
-}
-
-.clean-placeholder:hover {
-    background-color: #3a3a5a;
-    transform: scale(1.05);
-}
-
 /* 플레이스홀더 내용 */
 .placeholder-content {
-    padding: 15px;
     position: relative;
 }
 
@@ -270,7 +247,7 @@
     transition: all 0.2s ease;
     font-size: var(--mainFontSize);
     font-weight: 500;
-    min-width: 150px;
+    min-width: 80px;
 }
 
 .add-btn:hover {
@@ -314,12 +291,12 @@
         width: 95svw;
     }
     
-    .placeholder-header {
+    .placeholder-row {
         flex-direction: column;
         gap: 10px;
     }
     
-    .placeholder-inputs {
+    .placeholder-name, .placeholder-variable {
         width: 100%;
     }
     
@@ -330,7 +307,7 @@
 
 @media (max-width: 600px) {
     .direction-popup-header {
-        padding: 15px;
+        padding: 10px 15px;
     }
     
     .direction-popup-body {
@@ -339,10 +316,6 @@
     
     .placeholder-textarea {
         height: 100px;
-    }
-    
-    .placeholder-inputs {
-        flex-direction: column;
     }
 }
 

@@ -48,7 +48,7 @@ function openDirectionPopup() {
                         ${renderPlaceholders()}
                     </div>
                     <div class="direction-popup-buttons">
-                        <button id="add-new-placeholder" class="menu_button add-btn">+ 새 플레이스홀더</button>
+                        <button id="add-new-placeholder" class="menu_button add-btn">추가</button>
                     </div>
                 </div>
             </div>
@@ -67,15 +67,12 @@ function renderPlaceholders() {
     const placeholders = extension_settings[extensionName].placeholders || [];
     return placeholders.map(placeholder => `
         <div class="placeholder-item" data-id="${placeholder.id}">
-            <div class="placeholder-header">
-                <div class="placeholder-inputs">
-                    <input type="text" placeholder="이름" class="placeholder-name" value="${placeholder.name}">
-                    <input type="text" placeholder="변수 이름 (예: apple → {{apple}})" class="placeholder-variable" value="${placeholder.variable}">
-                </div>
+            <div class="placeholder-row">
+                <input type="text" placeholder="이름" class="placeholder-name" value="${placeholder.name}">
+                <input type="text" placeholder="변수명" class="placeholder-variable" value="${placeholder.variable}">
                 <div class="placeholder-buttons">
-                    <button class="add-placeholder" title="플레이스홀더 추가">+</button>
-                    <button class="remove-placeholder" title="플레이스홀더 제거">-</button>
                     <button class="clean-placeholder" title="내용 제거">Clean</button>
+                    <button class="remove-placeholder" title="플레이스홀더 삭제">삭제</button>
                 </div>
             </div>
             <div class="placeholder-content">
@@ -100,11 +97,6 @@ function setupEventListeners() {
     $("#add-new-placeholder").on("click", addNewPlaceholder);
     
     // 각 플레이스홀더 항목의 이벤트
-    $(document).on("click", ".add-placeholder", function() {
-        const itemId = $(this).closest('.placeholder-item').data('id');
-        addPlaceholderAfter(itemId);
-    });
-    
     $(document).on("click", ".remove-placeholder", function() {
         const itemId = $(this).closest('.placeholder-item').data('id');
         removePlaceholder(itemId);
@@ -126,17 +118,6 @@ function setupEventListeners() {
 function addNewPlaceholder() {
     const newPlaceholder = { id: generateId(), name: "", variable: "", content: "" };
     extension_settings[extensionName].placeholders.push(newPlaceholder);
-    refreshPlaceholdersContainer();
-    saveSettingsDebounced();
-    updateAllPlaceholders();
-}
-
-// 특정 위치 다음에 플레이스홀더 추가
-function addPlaceholderAfter(afterId) {
-    const placeholders = extension_settings[extensionName].placeholders;
-    const index = placeholders.findIndex(p => p.id === afterId);
-    const newPlaceholder = { id: generateId(), name: "", variable: "", content: "" };
-    placeholders.splice(index + 1, 0, newPlaceholder);
     refreshPlaceholdersContainer();
     saveSettingsDebounced();
     updateAllPlaceholders();
