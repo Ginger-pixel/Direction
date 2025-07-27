@@ -16,18 +16,107 @@ async function loadSettings() {
     if (Object.keys(extension_settings[extensionName]).length === 0) {
         Object.assign(extension_settings[extensionName], defaultSettings);
     }
-    
-    // 기본 플레이스홀더가 없으면 하나 추가
-    if (!extension_settings[extensionName].placeholders || extension_settings[extensionName].placeholders.length === 0) {
-        extension_settings[extensionName].placeholders = [
-            { id: generateId(), name: "", variable: "", content: "" }
-        ];
-    }
 }
 
 // 고유 ID 생성
 function generateId() {
     return 'placeholder_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}
+
+// 변수명 입력 팝업 표시
+function showVariableNamePopup() {
+    // 기존 팝업이 있으면 제거
+    $("#variable-name-popup").remove();
+    
+    const popupHtml = `
+        <div id="variable-name-popup" class="direction-popup">
+            <div class="variable-name-popup-content">
+                <div class="variable-name-popup-header">
+                    <h3>변수명 입력</h3>
+                </div>
+                <div class="variable-name-popup-body">
+                    <p>변수명을 입력하세요:</p>
+                    <input type="text" id="variable-name-input" placeholder="예: character, setting, mood" maxlength="50">
+                    <div class="variable-name-popup-buttons">
+                        <button id="variable-name-cancel" class="popup-btn cancel-btn">취소</button>
+                        <button id="variable-name-confirm" class="popup-btn confirm-btn">확인</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    $("body").append(popupHtml);
+    
+    // 이벤트 리스너
+    $("#variable-name-cancel").on("click", closeVariableNamePopup);
+    $("#variable-name-confirm").on("click", confirmVariableName);
+    
+    // Enter 키로 확인
+    $("#variable-name-input").on("keypress", function(e) {
+        if (e.which === 13) {
+            confirmVariableName();
+        }
+    });
+    
+    // ESC 키로 취소
+    $(document).on("keydown.variable-popup", function(e) {
+        if (e.which === 27) {
+            closeVariableNamePopup();
+        }
+    });
+    
+    // 입력 필드에 포커스
+    setTimeout(() => $("#variable-name-input").focus(), 100);
+}
+
+// 변수명 확인
+function confirmVariableName() {
+    const variableName = $("#variable-name-input").val().trim();
+    
+    if (!variableName) {
+        alert("변수명을 입력해주세요.");
+        return;
+    }
+    
+    // 영문, 숫자, 언더스코어만 허용
+    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(variableName)) {
+        alert("변수명은 영문, 숫자, 언더스코어(_)만 사용하고 숫자로 시작할 수 없습니다.");
+        return;
+    }
+    
+    // 중복 검사
+    const existingVariables = extension_settings[extensionName].placeholders.map(p => p.variable);
+    if (existingVariables.includes(variableName)) {
+        alert("이미 존재하는 변수명입니다.");
+        return;
+    }
+    
+    // 새 플레이스홀더 생성
+    const newPlaceholder = { 
+        id: generateId(), 
+        name: "", 
+        variable: variableName, 
+        content: "" 
+    };
+    
+    extension_settings[extensionName].placeholders.push(newPlaceholder);
+    
+    // 시스템에 즉시 적용
+    applyPlaceholderToSystem(newPlaceholder);
+    
+    // UI 새로고침
+    refreshPlaceholdersContainer();
+    saveSettingsDebounced();
+    
+    // 팝업 닫기
+    closeVariableNamePopup();
+}
+
+// 변수명 팝업 닫기
+function closeVariableNamePopup() {
+    $("#variable-name-popup").remove();
+    $(document).off("keydown.variable-popup");
 }
 
 // 플레이스홀더 창 열기
@@ -65,13 +154,23 @@ function openDirectionPopup() {
 // 플레이스홀더들을 HTML로 렌더링
 function renderPlaceholders() {
     const placeholders = extension_settings[extensionName].placeholders || [];
+    
+    // 플레이스홀더가 없을 때 안내 메시지 표시
+    if (placeholders.length === 0) {
+        return `
+            <div class="no-placeholders-message">
+                <p>아직 생성된 플레이스홀더가 없습니다.</p>
+                <p>"추가" 버튼을 클릭하여 새로운 플레이스홀더를 만들어보세요.</p>
+            </div>
+        `;
+    }
+    
     return placeholders.map(placeholder => `
         <div class="placeholder-item" data-id="${placeholder.id}">
             <div class="placeholder-row">
                 <input type="text" placeholder="제목" class="placeholder-name" value="${placeholder.name}">
-                <input type="text" placeholder="변수명" class="placeholder-variable" value="${placeholder.variable}">
+                <input type="text" class="placeholder-variable" value="${placeholder.variable}" readonly>
                 <div class="placeholder-buttons">
-                    <button class="save-placeholder" title="플레이스홀더 저장">Save</button>
                     <button class="clean-placeholder" title="내용 제거">Clean</button>
                     <button class="remove-placeholder" title="플레이스홀더 삭제">Delete</button>
                 </div>
@@ -93,15 +192,10 @@ function setupEventListeners() {
         }
     });
     
-    // 새 플레이스홀더 추가
-    $("#add-new-placeholder").on("click", addNewPlaceholder);
+    // 새 플레이스홀더 추가 (변수명 입력 팝업 표시)
+    $("#add-new-placeholder").on("click", showVariableNamePopup);
     
     // 각 플레이스홀더 항목의 이벤트
-    $(document).on("click", ".save-placeholder", function() {
-        const itemId = $(this).closest('.placeholder-item').data('id');
-        savePlaceholder(itemId);
-    });
-    
     $(document).on("click", ".remove-placeholder", function() {
         const itemId = $(this).closest('.placeholder-item').data('id');
         removePlaceholder(itemId);
@@ -112,53 +206,11 @@ function setupEventListeners() {
         cleanPlaceholder(itemId);
     });
     
-    // 입력 필드 변경 감지 (실시간 업데이트는 유지하되 시스템 적용은 Save 버튼으로)
-    $(document).on("input", ".placeholder-name, .placeholder-variable, .placeholder-textarea", function() {
+    // 입력 필드 변경 감지 (실시간 시스템 적용)
+    $(document).on("input", ".placeholder-name, .placeholder-textarea", function() {
         const itemId = $(this).closest('.placeholder-item').data('id');
-        updatePlaceholderData(itemId);
+        updatePlaceholderAndApply(itemId);
     });
-}
-
-// 새 플레이스홀더 추가
-function addNewPlaceholder() {
-    const newPlaceholder = { id: generateId(), name: "", variable: "", content: "" };
-    extension_settings[extensionName].placeholders.push(newPlaceholder);
-    refreshPlaceholdersContainer();
-    saveSettingsDebounced();
-}
-
-// 플레이스홀더 저장 (시스템에 적용)
-function savePlaceholder(itemId) {
-    const item = $(`[data-id="${itemId}"]`);
-    const placeholder = extension_settings[extensionName].placeholders.find(p => p.id === itemId);
-    
-    if (placeholder) {
-        // 데이터 업데이트
-        placeholder.name = item.find('.placeholder-name').val();
-        placeholder.variable = item.find('.placeholder-variable').val();
-        placeholder.content = item.find('.placeholder-textarea').val();
-        
-        // 변수명 유효성 검사
-        if (!placeholder.variable || !placeholder.variable.trim()) {
-            alert("변수명을 입력해주세요.");
-            return;
-        }
-        
-        // 설정 저장
-        saveSettingsDebounced();
-        
-        // 시스템에 적용
-        applyPlaceholderToSystem(placeholder);
-        
-        // 성공 피드백
-        const saveBtn = item.find('.save-placeholder');
-        const originalText = saveBtn.text();
-        saveBtn.text('저장됨').css('background-color', '#2d5016');
-        
-        setTimeout(() => {
-            saveBtn.text(originalText).css('background-color', '');
-        }, 1500);
-    }
 }
 
 // 플레이스홀더를 시스템에 적용
@@ -210,14 +262,8 @@ function removePlaceholderFromSystem(placeholder) {
 
 // 플레이스홀더 제거
 function removePlaceholder(itemId) {
-    const placeholders = extension_settings[extensionName].placeholders;
-    if (placeholders.length <= 1) {
-        alert("최소 하나의 플레이스홀더는 있어야 합니다.");
-        return;
-    }
-    
     // 삭제할 플레이스홀더 찾기
-    const placeholderToRemove = placeholders.find(p => p.id === itemId);
+    const placeholderToRemove = extension_settings[extensionName].placeholders.find(p => p.id === itemId);
     
     // 시스템에서 먼저 제거
     if (placeholderToRemove) {
@@ -225,7 +271,7 @@ function removePlaceholder(itemId) {
     }
     
     // 배열에서 제거
-    extension_settings[extensionName].placeholders = placeholders.filter(p => p.id !== itemId);
+    extension_settings[extensionName].placeholders = extension_settings[extensionName].placeholders.filter(p => p.id !== itemId);
     refreshPlaceholdersContainer();
     saveSettingsDebounced();
     
@@ -240,22 +286,22 @@ function cleanPlaceholder(itemId) {
         $(`[data-id="${itemId}"] .placeholder-textarea`).val("");
         saveSettingsDebounced();
         
-        // 내용만 지우고 변수는 유지하되, 빈 값으로 시스템에 적용
-        if (placeholder.variable && placeholder.variable.trim()) {
-            applyPlaceholderToSystem(placeholder);
-        }
+        // 빈 값으로 시스템에 적용
+        applyPlaceholderToSystem(placeholder);
     }
 }
 
-// 플레이스홀더 데이터만 업데이트 (시스템 적용 없이)
-function updatePlaceholderData(itemId) {
+// 플레이스홀더 업데이트 및 실시간 시스템 적용
+function updatePlaceholderAndApply(itemId) {
     const item = $(`[data-id="${itemId}"]`);
     const placeholder = extension_settings[extensionName].placeholders.find(p => p.id === itemId);
     
     if (placeholder) {
         placeholder.name = item.find('.placeholder-name').val();
-        placeholder.variable = item.find('.placeholder-variable').val();
         placeholder.content = item.find('.placeholder-textarea').val();
+        
+        // 즉시 시스템에 적용
+        applyPlaceholderToSystem(placeholder);
         
         saveSettingsDebounced();
     }

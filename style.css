@@ -48,6 +48,94 @@
     }
 }
 
+/* 변수명 입력 팝업 */
+.variable-name-popup-content {
+    background-color: var(--SmartThemeBlurTintColor);
+    border-radius: 10px;
+    width: 400px;
+    max-width: 90svw;
+    box-shadow: 0 0 10px var(--black70a);
+    border: 1px solid var(--SmartThemeBorderColor);
+    overflow: hidden;
+    animation: slideIn 0.2s ease-out forwards;
+    transform: translateY(-20px);
+}
+
+.variable-name-popup-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--SmartThemeBorderColor);
+    background-color: #4a4a4a;
+}
+
+.variable-name-popup-header h3 {
+    margin: 0;
+    color: var(--SmartThemeBodyColor);
+    font-size: calc(var(--mainFontSize) * 1.1);
+    font-weight: 600;
+}
+
+.variable-name-popup-body {
+    padding: 20px;
+}
+
+.variable-name-popup-body p {
+    margin: 0 0 15px 0;
+    color: var(--SmartThemeBodyColor);
+    font-size: var(--mainFontSize);
+}
+
+#variable-name-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 5px;
+    background-color: var(--black30a);
+    color: var(--SmartThemeBodyColor);
+    font-size: var(--mainFontSize);
+    box-sizing: border-box;
+    margin-bottom: 20px;
+}
+
+#variable-name-input:focus {
+    outline: none;
+    border-color: var(--SmartThemeQuoteColor);
+    box-shadow: 0 0 0 2px rgba(var(--SmartThemeQuoteColorRGB), 0.3);
+}
+
+.variable-name-popup-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.popup-btn {
+    padding: 8px 16px;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: var(--mainFontSize);
+    font-weight: 500;
+}
+
+.cancel-btn {
+    background-color: #4a4a4a;
+    color: var(--SmartThemeBodyColor);
+}
+
+.cancel-btn:hover {
+    background-color: #5a1a1a;
+}
+
+.confirm-btn {
+    background-color: #2d5016;
+    color: var(--SmartThemeBodyColor);
+}
+
+.confirm-btn:hover {
+    background-color: #3d6026;
+}
+
 /* 팝업 헤더 */
 .direction-popup-header {
     display: flex;
@@ -104,6 +192,26 @@
     margin-bottom: 20px;
 }
 
+/* 빈 플레이스홀더 안내 메시지 */
+.no-placeholders-message {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--grey30);
+    font-size: var(--mainFontSize);
+}
+
+.no-placeholders-message p {
+    margin: 10px 0;
+    line-height: 1.5;
+}
+
+.no-placeholders-message p:first-child {
+    font-weight: 600;
+    font-size: calc(var(--mainFontSize) * 1.1);
+    color: var(--SmartThemeBodyColor);
+    opacity: 0.8;
+}
+
 /* 개별 플레이스홀더 항목 */
 .placeholder-item {
     margin-bottom: 20px;
@@ -125,7 +233,7 @@
     margin-bottom: 10px;
 }
 
-.placeholder-name, .placeholder-variable {
+.placeholder-name {
     flex: 1;
     padding: 8px 12px;
     border: 1px solid var(--SmartThemeBorderColor);
@@ -136,13 +244,25 @@
     transition: all 0.2s ease;
 }
 
-.placeholder-name:focus, .placeholder-variable:focus {
+.placeholder-variable {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 5px;
+    background-color: var(--grey70);
+    color: var(--SmartThemeBodyColor);
+    font-size: var(--mainFontSize);
+    cursor: not-allowed;
+    opacity: 0.8;
+}
+
+.placeholder-name:focus {
     outline: none;
     border-color: var(--SmartThemeQuoteColor);
     box-shadow: 0 0 0 2px rgba(var(--SmartThemeQuoteColorRGB), 0.3);
 }
 
-.placeholder-name::placeholder, .placeholder-variable::placeholder {
+.placeholder-name::placeholder {
     color: var(--grey30);
     opacity: 0.7;
 }
@@ -153,7 +273,7 @@
     gap: 5px;
 }
 
-.save-placeholder, .clean-placeholder, .remove-placeholder {
+.clean-placeholder, .remove-placeholder {
     height: 32px;
     border: 1px solid var(--SmartThemeBorderColor);
     border-radius: 5px;
@@ -167,11 +287,6 @@
     font-size: 12px;
     font-weight: 500;
     padding: 0 12px;
-}
-
-.save-placeholder:hover {
-    background-color: #2d5016;
-    transform: scale(1.05);
 }
 
 .clean-placeholder:hover {
@@ -295,6 +410,10 @@
     .placeholder-buttons {
         justify-content: center;
     }
+    
+    .variable-name-popup-content {
+        width: 95svw;
+    }
 }
 
 @media (max-width: 600px) {
@@ -323,10 +442,23 @@
     }
     
     /* 모바일에서 버튼 크기 조정 */
-    .save-placeholder, .clean-placeholder, .remove-placeholder {
+    .clean-placeholder, .remove-placeholder {
         font-size: 11px;
         padding: 0 8px;
         height: 28px;
+    }
+    
+    .variable-name-popup-content {
+        width: 95svw;
+        margin: 20px;
+    }
+    
+    .variable-name-popup-body {
+        padding: 15px;
+    }
+    
+    .no-placeholders-message {
+        padding: 30px 15px;
     }
 }
 
@@ -356,6 +488,15 @@
     
     .placeholder-textarea {
         height: 80px;
+    }
+    
+    .variable-name-popup-content {
+        width: 98svw;
+        margin: 10px;
+    }
+    
+    .no-placeholders-message {
+        padding: 20px 10px;
     }
 }
 
