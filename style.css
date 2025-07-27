@@ -1,79 +1,8 @@
 /* Direction 확장 스타일 - 탭 기반 플레이스홀더 관리 */
 
-/* 전체 박스 사이징 */
-#placeholderPanel,
-#placeholderPanel * {
-    box-sizing: border-box;
-}
-
-/* 메인 패널 */
-#placeholderPanel {
-    display: none;
-    overflow-x: hidden;
-    overflow-y: auto;
-    max-width: 90vw;
-    max-height: 90vh;
-    min-width: 100px;
-    min-height: 50px;
-    border-radius: 10px;
-    border: 1px solid var(--SmartThemeBorderColor);
-    position: fixed;
-    padding: 10px;
-    flex-direction: column;
-    box-shadow: 0 0 10px var(--black70a);
-    z-index: 3000;
-    width: 700px;
-    height: 500px;
-    opacity: 0;
-    background: var(--SmartThemeBlurTintColor);
-    /* 안전한 중앙 정렬 */
-    left: 50%;
-    top: 50%;
-    margin-left: -350px; /* width의 절반 */
-    margin-top: -250px;   /* height의 절반 */
-}
-
-#placeholderPanel.flex {
-    display: flex;
-    opacity: 1;
-}
-
-/* 패널 헤더 */
-.panelControlBar {
-    padding: 8px;
-    border-bottom: 1px solid var(--SmartThemeBorderColor);
-    background: var(--SmartThemeBlurTintColor);
-    margin: -10px -10px 10px -10px;
-}
-
-.drag-grabber {
-    cursor: move;
-    color: var(--SmartThemeBodyColor);
-    margin-right: auto;
-}
-
-.floating_panel_close {
-    cursor: pointer;
-    color: var(--SmartThemeBodyColor);
-    font-size: 18px;
-    transition: all 0.2s ease;
-}
-
-.floating_panel_close:hover {
-    color: var(--SmartThemeQuoteColor);
-    transform: scale(1.1);
-}
-
-/* 패널 내용 홀더 */
-#placeholderPanelHolder {
-    flex: 1;
-    overflow-y: auto;
-    padding: 0;
-}
-
 /* 탭 컨테이너 */
 .placeholder-tabs {
-    margin: 0 0 10px 0;
+    margin: 10px 0;
 }
 
 /* 탭 목록 */
@@ -84,7 +13,6 @@
     margin: 0;
     padding: 0;
     list-style: none;
-    overflow-x: hidden;
 }
 
 /* 개별 탭 */
@@ -141,8 +69,7 @@
     border: 1px solid var(--SmartThemeBorderColor);
     border-top: none;
     padding: 20px;
-    height: 380px;
-    overflow-x: hidden;
+    min-height: 400px;
     overflow-y: auto;
 }
 
@@ -218,7 +145,6 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
 }
 
 .placeholder-textarea {
@@ -234,9 +160,7 @@
     box-sizing: border-box;
     transition: all 0.2s ease;
     line-height: 1.5;
-    min-height: 250px;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
+    min-height: 300px;
 }
 
 .placeholder-textarea:focus {
@@ -298,41 +222,26 @@
 }
 
 /* 스크롤바 스타일 */
-.placeholder-tab-content::-webkit-scrollbar,
-#placeholderPanelHolder::-webkit-scrollbar {
+.placeholder-tab-content::-webkit-scrollbar {
     width: 8px;
 }
 
-.placeholder-tab-content::-webkit-scrollbar-track,
-#placeholderPanelHolder::-webkit-scrollbar-track {
+.placeholder-tab-content::-webkit-scrollbar-track {
     background: var(--black30a);
     border-radius: 4px;
 }
 
-.placeholder-tab-content::-webkit-scrollbar-thumb,
-#placeholderPanelHolder::-webkit-scrollbar-thumb {
+.placeholder-tab-content::-webkit-scrollbar-thumb {
     background: var(--SmartThemeBorderColor);
     border-radius: 4px;
 }
 
-.placeholder-tab-content::-webkit-scrollbar-thumb:hover,
-#placeholderPanelHolder::-webkit-scrollbar-thumb:hover {
+.placeholder-tab-content::-webkit-scrollbar-thumb:hover {
     background: var(--SmartThemeQuoteColor);
 }
 
 /* 반응형 디자인 */
-@media (max-width: 800px) {
-    #placeholderPanel {
-        width: calc(100vw - 20px);
-        height: calc(100vh - 40px);
-        left: 10px !important;
-        top: 20px !important;
-        margin-left: 0 !important;
-        margin-top: 0 !important;
-        max-width: none;
-        max-height: none;
-    }
-    
+@media (max-width: 600px) {
     .placeholder-header-row {
         flex-direction: column;
         gap: 8px;
@@ -352,30 +261,11 @@
     .placeholder-textarea {
         min-height: 200px;
     }
-    
-    .placeholder-tab-content {
-        height: 300px;
-        overflow-x: hidden;
-        overflow-y: auto;
-    }
 }
 
 @media (max-width: 480px) {
-    #placeholderPanel {
-        width: calc(100vw - 10px);
-        height: calc(100vh - 20px);
-        left: 5px !important;
-        top: 10px !important;
-        margin-left: 0 !important;
-        margin-top: 0 !important;
-        padding: 5px;
-    }
-    
     .placeholder-tab-content {
-        padding: 10px;
-        height: 250px;
-        overflow-x: hidden;
-        overflow-y: auto;
+        padding: 15px;
     }
     
     .placeholder-tab {
@@ -385,10 +275,5 @@
     
     .placeholder-textarea {
         min-height: 150px;
-    }
-    
-    .panelControlBar {
-        padding: 5px;
-        margin: -5px -5px 5px -5px;
     }
 } 

@@ -1,5 +1,5 @@
 // Direction 확장 - 탭 기반 플레이스홀더 관리
-import { extension_settings, getContext, loadExtensionSettings } from "../../../extensions.js";
+import { extension_settings, getContext, loadExtensionSettings, renderExtensionTemplateAsync } from "../../../extensions.js";
 import { saveSettingsDebounced } from "../../../../script.js";
 import { SlashCommand } from "../../../slash-commands/SlashCommand.js";
 import { SlashCommandParser } from "../../../slash-commands/SlashCommandParser.js";
@@ -129,112 +129,33 @@ async function showVariableNamePopup() {
 
 // 플레이스홀더 창 열기
 async function openDirectionPopup() {
-    // 기존 패널이 있으면 제거
-    $("#placeholderPanel").remove();
-    
-    // 템플릿 로드
-    const templateHtml = await $.get(`${extensionFolderPath}/template.html`);
-    
-    // movingDivs에 패널 추가 (노트북 확장과 같은 방식)
-    const movingDivs = document.getElementById('movingDivs');
-    if (movingDivs) {
-        $(movingDivs).append(templateHtml);
-    } else {
-        // fallback - movingDivs가 없으면 body에 추가
-        $("body").append(templateHtml);
-    }
-    
-    const panel = $("#placeholderPanel");
+    const template = $(await renderExtensionTemplateAsync(`third-party/${extensionName}`, 'template'));
     
     // 탭과 내용 렌더링
-    renderTabs(panel);
-    renderTabContent(panel);
+    renderTabs(template);
+    renderTabContent(template);
     
     // 이벤트 리스너 추가
-    setupEventListeners(panel);
+    setupEventListeners(template);
     
-    // 패널 표시 (SillyTavern 애니메이션 시스템 사용)
-    await animatePlaceholderPanel(false);
-    
-    // 닫기 버튼 이벤트
-    panel.find('#placeholderPanelClose').on('click', function() {
-        closeDirectionPanel();
+    const popup = new Popup(template, POPUP_TYPE.CONFIRM, '플레이스홀더 관리', { 
+        wide: true, 
+        large: true,
+        okButton: '저장', 
+        cancelButton: '취소'
     });
     
-    // ESC 키로 닫기
-    $(document).on('keydown.placeholder-panel', function(e) {
-        if (e.which === 27) {
-            closeDirectionPanel();
-        }
-    });
+    const result = await popup.show();
     
-    // 패널 외부 클릭으로 닫기
-    panel.on('click', function(e) {
-        if (e.target === this) {
-            closeDirectionPanel();
-        }
-    });
-}
-
-// SillyTavern 애니메이션 설정 가져오기
-async function getAnimationSettings() {
-    try {
-        const animation_duration = window.animation_duration || 125;
-        const animation_easing = window.animation_easing || 'ease-in-out';
-        return { animation_duration, animation_easing };
-    } catch (err) {
-        return { animation_duration: 125, animation_easing: 'ease-in-out' };
-    }
-}
-
-// 플레이스홀더 패널 애니메이션
-async function animatePlaceholderPanel(alreadyVisible) {
-    const panel = document.getElementById('placeholderPanel');
-    if (!panel) return;
-    
-    const { animation_duration, animation_easing } = await getAnimationSettings();
-
-    const keyframes = [
-        { opacity: alreadyVisible ? 1 : 0 },
-        { opacity: alreadyVisible ? 0 : 1 },
-    ];
-    const options = {
-        duration: animation_duration,
-        easing: animation_easing,
-    };
-
-    const animation = panel.animate(keyframes, options);
-
-    if (alreadyVisible) {
-        await animation.finished;
-        panel.classList.toggle('flex');
-    } else {
-        panel.classList.toggle('flex');
-        await animation.finished;
-    }
-}
-
-// 패널 닫기
-async function closeDirectionPanel() {
-    try {
-        await animatePlaceholderPanel(true);
-        $("#placeholderPanel").remove();
-        $(document).off('keydown.placeholder-panel');
-    } catch (err) {
-        // fallback - 애니메이션 실패시 바로 제거
-        const panel = $("#placeholderPanel");
-        panel.removeClass('flex');
-        setTimeout(() => {
-            panel.remove();
-            $(document).off('keydown.placeholder-panel');
-        }, 200);
+    if (result) {
+        console.log("플레이스홀더 설정이 저장되었습니다.");
     }
 }
 
 // 탭 목록 렌더링
-function renderTabs(panel) {
+function renderTabs(template) {
     const placeholders = extension_settings[extensionName].placeholders || [];
-    const tabList = panel.find('#placeholder-tab-list');
+    const tabList = template.find('#placeholder-tab-list');
     
     let tabsHtml = '';
     
@@ -260,9 +181,9 @@ function renderTabs(panel) {
 }
 
 // 탭 내용 렌더링
-function renderTabContent(panel) {
+function renderTabContent(template) {
     const placeholders = extension_settings[extensionName].placeholders || [];
-    const contentArea = panel.find('#placeholder-tab-content');
+    const contentArea = template.find('#placeholder-tab-content');
     
     if (placeholders.length === 0 || selectedTabIndex >= placeholders.length) {
         // 플레이스홀더가 없거나 선택된 탭이 범위를 벗어난 경우
@@ -302,59 +223,59 @@ function renderTabContent(panel) {
 }
 
 // 탭 선택
-function selectTab(panel, index) {
+function selectTab(template, index) {
     const placeholders = extension_settings[extensionName].placeholders || [];
     
     if (index >= 0 && index < placeholders.length) {
         selectedTabIndex = index;
-        renderTabs(panel);
-        renderTabContent(panel);
-        setupEventListeners(panel);
+        renderTabs(template);
+        renderTabContent(template);
+        setupEventListeners(template);
     }
 }
 
 // 이벤트 리스너 설정
-function setupEventListeners(panel) {
+function setupEventListeners(template) {
     // 탭 클릭 이벤트
-    panel.find('.placeholder-tab:not(.add-tab)').off('click').on('click', function() {
+    template.find('.placeholder-tab:not(.add-tab)').off('click').on('click', function() {
         const index = parseInt($(this).data('index'));
-        selectTab(panel, index);
+        selectTab(template, index);
     });
     
     // + 탭 클릭 이벤트
-    panel.find('.placeholder-tab.add-tab').off('click').on('click', async function() {
+    template.find('.placeholder-tab.add-tab').off('click').on('click', async function() {
         const success = await showVariableNamePopup();
         if (success) {
             // 새로 추가된 플레이스홀더로 이동
             selectedTabIndex = extension_settings[extensionName].placeholders.length - 1;
-            renderTabs(panel);
-            renderTabContent(panel);
-            setupEventListeners(panel);
+            renderTabs(template);
+            renderTabContent(template);
+            setupEventListeners(template);
         }
     });
     
     // 제목 입력 필드 변경 이벤트
-    panel.find('.placeholder-title-input').off('input').on('input', function() {
+    template.find('.placeholder-title-input').off('input').on('input', function() {
         const index = parseInt($(this).data('index'));
         const newTitle = $(this).val();
         updatePlaceholderTitle(index, newTitle);
         // 탭 제목 즉시 업데이트
-        renderTabs(panel);
-        setupEventListeners(panel);
+        renderTabs(template);
+        setupEventListeners(template);
     });
     
     // 내용 텍스트 에리어 변경 이벤트
-    panel.find('.placeholder-textarea').off('input').on('input', function() {
+    template.find('.placeholder-textarea').off('input').on('input', function() {
         const index = parseInt($(this).data('index'));
         const newContent = $(this).val();
         updatePlaceholderContent(index, newContent);
     });
     
     // 삭제 버튼 클릭 이벤트
-    panel.find('.placeholder-delete-btn').off('click').on('click', function() {
+    template.find('.placeholder-delete-btn').off('click').on('click', function() {
         const index = parseInt($(this).data('index'));
         if (confirm('이 플레이스홀더를 삭제하시겠습니까?')) {
-            deletePlaceholder(panel, index);
+            deletePlaceholder(template, index);
         }
     });
 }
@@ -379,7 +300,7 @@ function updatePlaceholderContent(index, newContent) {
 }
 
 // 플레이스홀더 삭제
-function deletePlaceholder(panel, index) {
+function deletePlaceholder(template, index) {
     const placeholders = extension_settings[extensionName].placeholders;
     if (placeholders && placeholders[index]) {
         // 시스템에서 제거
@@ -394,9 +315,9 @@ function deletePlaceholder(panel, index) {
         }
         
         // UI 업데이트
-        renderTabs(panel);
-        renderTabContent(panel);
-        setupEventListeners(panel);
+        renderTabs(template);
+        renderTabContent(template);
+        setupEventListeners(template);
         
         saveSettingsDebounced();
     }
