@@ -399,14 +399,7 @@
     transform: scale(1.1);
 }
 
-/* 모바일 안전 영역 기본 설정 */
-@supports (padding: max(0px)) {
-    .direction-popup-content,
-    .variable-name-popup-content {
-        padding-top: max(10px, env(safe-area-inset-top, 0px));
-        padding-bottom: max(10px, env(safe-area-inset-bottom, 0px));
-    }
-}
+
 
 /* 반응형 디자인 */
 @media (max-width: 800px) {
@@ -434,32 +427,13 @@
 }
 
 @media (max-width: 600px) {
-    /* 모바일에서 노트북 방식으로 직접 위치 지정 */
-    .direction-popup {
-        display: block;
-        padding: 0;
-    }
-    
     .direction-popup-content {
-        position: fixed;
-        left: 50%;
-        top: max(60px, env(safe-area-inset-top, 0px) + 20px);
-        transform: translateX(-50%);
-        width: calc(100svw - 20px);
-        max-width: 95svw;
-        max-height: calc(100svh - max(80px, env(safe-area-inset-top, 0px) + 40px));
-        margin: 0;
-        overflow-y: auto;
+        width: 95svw;
+        max-height: 85svh;
     }
     
     .variable-name-popup-content {
-        position: fixed;
-        left: 50%;
-        top: 30%;
-        transform: translate(-50%, -30%);
-        width: calc(100svw - 40px);
-        max-width: 95svw;
-        margin: 0;
+        width: 95svw;
     }
     
     .direction-popup-header {
@@ -493,15 +467,12 @@
 /* 매우 작은 화면 (스마트폰 세로) */
 @media (max-width: 480px) {
     .direction-popup-content {
-        top: max(50px, env(safe-area-inset-top, 0px) + 15px);
-        width: calc(100svw - 20px);
-        max-height: calc(100svh - max(70px, env(safe-area-inset-top, 0px) + 35px));
+        width: calc(100svw - 10px);
+        max-height: 90svh;
     }
     
     .variable-name-popup-content {
-        top: 25%;
-        transform: translate(-50%, -25%);
-        width: calc(100svw - 20px);
+        width: calc(100svw - 10px);
     }
     
     .direction-popup-header {
