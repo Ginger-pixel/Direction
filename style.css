@@ -417,16 +417,32 @@
 }
 
 @media (max-width: 600px) {
-    /* 모바일에서 팝업 위치 조정 */
+    /* 모바일에서 노트북 방식으로 직접 위치 지정 */
     .direction-popup {
-        align-items: flex-start;
-        padding: 20px 0;
+        display: block;
+        padding: 0;
     }
     
     .direction-popup-content {
-        width: 95svw;
+        position: fixed;
+        left: 50%;
+        top: 20px;
+        transform: translateX(-50%);
+        width: calc(100svw - 20px);
+        max-width: 95svw;
         max-height: calc(100svh - 40px);
-        margin-top: 20px;
+        margin: 0;
+        overflow-y: auto;
+    }
+    
+    .variable-name-popup-content {
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: calc(100svw - 40px);
+        max-width: 95svw;
+        margin: 0;
     }
     
     .direction-popup-header {
@@ -448,11 +464,6 @@
         height: 28px;
     }
     
-    .variable-name-popup-content {
-        width: 95svw;
-        margin: 20px;
-    }
-    
     .variable-name-popup-body {
         padding: 15px;
     }
@@ -464,14 +475,14 @@
 
 /* 매우 작은 화면 (스마트폰 세로) */
 @media (max-width: 480px) {
-    .direction-popup {
-        padding: 10px 0;
+    .direction-popup-content {
+        top: 10px;
+        width: calc(100svw - 20px);
+        max-height: calc(100svh - 20px);
     }
     
-    .direction-popup-content {
-        width: 98svw;
-        max-height: calc(100svh - 20px);
-        margin-top: 10px;
+    .variable-name-popup-content {
+        width: calc(100svw - 20px);
     }
     
     .direction-popup-header {
@@ -488,11 +499,6 @@
     
     .placeholder-textarea {
         height: 80px;
-    }
-    
-    .variable-name-popup-content {
-        width: 98svw;
-        margin: 10px;
     }
     
     .no-placeholders-message {

@@ -329,6 +329,33 @@ function updateAllPlaceholders() {
     });
 }
 
+// 슬래시 커맨드 등록
+function registerSlashCommands() {
+    // /placeholder 커맨드 등록
+    if (window.SlashCommandParser) {
+        window.SlashCommandParser.addCommand('placeholder', placeholderSlashCommand, [], 
+            '<span class="monospace">/placeholder</span> – 플레이스홀더 관리 창을 엽니다', true, true);
+        
+        // /ph 커맨드 등록 (짧은 별칭)
+        window.SlashCommandParser.addCommand('ph', placeholderSlashCommand, [], 
+            '<span class="monospace">/ph</span> – 플레이스홀더 관리 창을 엽니다 (placeholder의 별칭)', true, true);
+            
+        console.log("플레이스홀더 슬래시 커맨드가 등록되었습니다: /placeholder, /ph");
+    } else {
+        // SlashCommandParser가 아직 로드되지 않은 경우 나중에 시도
+        setTimeout(registerSlashCommands, 1000);
+    }
+}
+
+// 슬래시 커맨드 핸들러
+function placeholderSlashCommand(args, value) {
+    // 플레이스홀더 팝업 열기
+    openDirectionPopup();
+    
+    // 커맨드 성공 메시지 (선택사항)
+    return "플레이스홀더 관리 창을 열었습니다.";
+}
+
 // 요술봉메뉴에 버튼 추가
 async function addToWandMenu() {
     try {
@@ -353,5 +380,9 @@ jQuery(async () => {
     await loadSettings();
     await addToWandMenu();
     updateAllPlaceholders();
+    
+    // 슬래시 커맨드 등록
+    registerSlashCommands();
+    
     console.log("Direction 확장이 로드되었습니다.");
 }); 
