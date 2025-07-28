@@ -1,4 +1,4 @@
-// Direction 확장 - 드롭다운 기반 플레이스홀더 관리
+// Placeholder-Manager 확장 - 드롭다운 기반 플레이스홀더 관리
 import { extension_settings, getContext, loadExtensionSettings, renderExtensionTemplateAsync } from "../../../extensions.js";
 import { saveSettingsDebounced } from "../../../../script.js";
 import { SlashCommand } from "../../../slash-commands/SlashCommand.js";
@@ -7,7 +7,7 @@ import { ARGUMENT_TYPE, SlashCommandNamedArgument } from "../../../slash-command
 import { POPUP_RESULT, POPUP_TYPE, Popup } from "../../../popup.js";
 
 // 확장 설정
-const extensionName = "Direction";
+const extensionName = "Placeholder-Manager";
 const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
 const extensionSettings = extension_settings[extensionName];
 const defaultSettings = {
@@ -58,8 +58,14 @@ function generateId() {
 // 변수명 입력 팝업 표시
 async function showVariableNamePopup() {
     let success = false;
+    let currentPopup = null;
     
     while (!success) {
+        // 이전 팝업이 있다면 닫기
+        if (currentPopup && currentPopup.dlg && currentPopup.dlg.is(':visible')) {
+            currentPopup.dlg.dialog('close');
+        }
+        
         const variableNameHtml = `
             <div class="flex-container flexFlowColumn">
                 <p>플레이스홀더 변수명을 입력하세요:</p>
@@ -69,12 +75,12 @@ async function showVariableNamePopup() {
         `;
         
         const template = $(variableNameHtml);
-        const popup = new Popup(template, POPUP_TYPE.CONFIRM, '변수명 입력', { 
+        currentPopup = new Popup(template, POPUP_TYPE.CONFIRM, '변수명 입력', { 
             okButton: '확인', 
             cancelButton: '취소'
         });
         
-        const result = await popup.show();
+        const result = await currentPopup.show();
         
         if (!result) {
             // 취소 버튼을 눌렀거나 ESC로 닫았을 때
@@ -85,25 +91,41 @@ async function showVariableNamePopup() {
         
         // 변수명 유효성 검사
         if (!variableName) {
-            alert('변수명을 입력해주세요.');
+            // 팝업을 닫고 에러 메시지 표시
+            if (currentPopup && currentPopup.dlg && currentPopup.dlg.is(':visible')) {
+                currentPopup.dlg.dialog('close');
+            }
+            setTimeout(() => alert('변수명을 입력해주세요.'), 100);
             continue; // 다시 입력 받기
         }
         
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(variableName)) {
-            alert('변수명 형식이 올바르지 않습니다.\n영문, 숫자, 언더스코어(_)만 사용 가능하며\n숫자로 시작할 수 없습니다.');
+            // 팝업을 닫고 에러 메시지 표시
+            if (currentPopup && currentPopup.dlg && currentPopup.dlg.is(':visible')) {
+                currentPopup.dlg.dialog('close');
+            }
+            setTimeout(() => alert('변수명 형식이 올바르지 않습니다.\n영문, 숫자, 언더스코어(_)만 사용 가능하며\n숫자로 시작할 수 없습니다.'), 100);
             continue; // 다시 입력 받기
         }
         
         // 시스템 예약어 검사
         if (RESERVED_WORDS.includes(variableName.toLowerCase())) {
-            alert(`'${variableName}'는 SillyTavern 시스템 예약어입니다.\n다른 이름을 사용해주세요.`);
+            // 팝업을 닫고 에러 메시지 표시
+            if (currentPopup && currentPopup.dlg && currentPopup.dlg.is(':visible')) {
+                currentPopup.dlg.dialog('close');
+            }
+            setTimeout(() => alert(`'${variableName}'는 SillyTavern 시스템 예약어입니다.\n다른 이름을 사용해주세요.`), 100);
             continue; // 다시 입력 받기
         }
         
         // 중복 검사
         const existingVariables = extension_settings[extensionName].placeholders.map(p => p.variable);
         if (existingVariables.includes(variableName)) {
-            alert('이미 존재하는 변수명입니다.\n다른 이름을 사용해주세요.');
+            // 팝업을 닫고 에러 메시지 표시
+            if (currentPopup && currentPopup.dlg && currentPopup.dlg.is(':visible')) {
+                currentPopup.dlg.dialog('close');
+            }
+            setTimeout(() => alert('이미 존재하는 변수명입니다.\n다른 이름을 사용해주세요.'), 100);
             continue; // 다시 입력 받기
         }
         
@@ -125,13 +147,18 @@ async function showVariableNamePopup() {
         
         // 새로 생성된 플레이스홀더를 선택
         selectedPlaceholderId = newPlaceholder.id;
+        
+        // 성공 시 팝업 명시적으로 닫기
+        if (currentPopup && currentPopup.dlg && currentPopup.dlg.is(':visible')) {
+            currentPopup.dlg.dialog('close');
+        }
     }
     
     return true;
 }
 
 // 플레이스홀더 창 열기
-async function openDirectionPopup() {
+async function openPlaceholderManagerPopup() {
     const template = $(await renderExtensionTemplateAsync(`third-party/${extensionName}`, 'template'));
     
     // 첫 번째 플레이스홀더를 기본 선택
@@ -165,14 +192,17 @@ async function openDirectionPopup() {
 function renderDropdown(template) {
     const placeholders = extension_settings[extensionName].placeholders || [];
     const dropdown = template.find('#placeholder-dropdown');
+    const deleteBtn = template.find('#delete-placeholder-btn');
     
     dropdown.empty();
     
     if (placeholders.length === 0) {
         dropdown.append('<option value="">플레이스홀더가 없습니다</option>');
         dropdown.prop('disabled', true);
+        deleteBtn.prop('disabled', true);
     } else {
         dropdown.prop('disabled', false);
+        deleteBtn.prop('disabled', false);
         placeholders.forEach(placeholder => {
             const isSelected = placeholder.id === selectedPlaceholderId;
             const displayText = `{{${placeholder.variable}}}`;
@@ -207,8 +237,8 @@ function renderEditor(template) {
                        placeholder="플레이스홀더 제목을 입력하세요" 
                        value="${selectedPlaceholder.name}"
                        data-id="${selectedPlaceholder.id}">
-                <button class="placeholder-delete-btn" data-id="${selectedPlaceholder.id}" title="플레이스홀더 삭제">
-                    <i class="fa-solid fa-trash"></i>
+                <button class="placeholder-clear-content-btn" data-id="${selectedPlaceholder.id}" title="내용 지우기">
+                    <i class="fa-solid fa-eraser"></i>
                 </button>
             </div>
             <div class="placeholder-content-area">
@@ -267,11 +297,20 @@ function setupEventListeners(template) {
         updatePlaceholderContent(placeholderId, newContent);
     });
     
-    // 삭제 버튼 클릭 이벤트
-    template.find('.placeholder-delete-btn').off('click').on('click', function() {
+    // 상단 삭제 버튼 클릭 이벤트
+    template.find('#delete-placeholder-btn').off('click').on('click', function() {
+        if (selectedPlaceholderId) {
+            if (confirm('이 플레이스홀더를 삭제하시겠습니까?')) {
+                deletePlaceholder(template, selectedPlaceholderId);
+            }
+        }
+    });
+    
+    // 내용 지우기 버튼 클릭 이벤트
+    template.find('.placeholder-clear-content-btn').off('click').on('click', function() {
         const placeholderId = $(this).data('id');
-        if (confirm('이 플레이스홀더를 삭제하시겠습니까?')) {
-            deletePlaceholder(template, placeholderId);
+        if (confirm('이 플레이스홀더의 내용을 모두 지우시겠습니까?')) {
+            clearPlaceholderContent(template, placeholderId);
         }
     });
 }
@@ -318,6 +357,23 @@ function deletePlaceholder(template, placeholderId) {
         
         // UI 업데이트
         renderDropdown(template);
+        renderEditor(template);
+        setupEventListeners(template);
+        
+        saveSettingsDebounced();
+    }
+}
+
+// 플레이스홀더 내용 지우기
+function clearPlaceholderContent(template, placeholderId) {
+    const placeholders = extension_settings[extensionName].placeholders;
+    const placeholder = placeholders.find(p => p.id === placeholderId);
+    
+    if (placeholder) {
+        placeholder.content = "";
+        applyPlaceholderToSystem(placeholder);
+        
+        // UI 업데이트 (편집기만 다시 렌더링)
         renderEditor(template);
         setupEventListeners(template);
         
@@ -383,7 +439,7 @@ function registerSlashCommands() {
         SlashCommandParser.addCommandObject(SlashCommand.fromProps({
             name: 'placeholder',
             callback: async (parsedArgs) => {
-                openDirectionPopup();
+                openPlaceholderManagerPopup();
                 return '';
             },
             helpString: '플레이스홀더 관리 창을 엽니다.\n사용법: /placeholder',
@@ -407,7 +463,7 @@ async function addToWandMenu() {
         const extensionsMenu = $("#extensionsMenu");
         if (extensionsMenu.length > 0) {
             extensionsMenu.append(buttonHtml);
-            $("#direction_button").on("click", openDirectionPopup);
+            $("#placeholder_manager_button").on("click", openPlaceholderManagerPopup);
         } else {
             setTimeout(addToWandMenu, 1000);
         }
@@ -425,5 +481,5 @@ jQuery(async () => {
     // SillyTavern 로드 완료 후 슬래시 커맨드 등록
     setTimeout(registerSlashCommands, 2000);
     
-    console.log("Direction 확장이 로드되었습니다.");
+    console.log("Placeholder-Manager 확장이 로드되었습니다.");
 }); 
