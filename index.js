@@ -58,14 +58,8 @@ function generateId() {
 // 변수명 입력 팝업 표시
 async function showVariableNamePopup() {
     let success = false;
-    let currentPopup = null;
     
     while (!success) {
-        // 이전 팝업이 있다면 닫기
-        if (currentPopup && currentPopup.dlg && currentPopup.dlg.is(':visible')) {
-            currentPopup.dlg.dialog('close');
-        }
-        
         const variableNameHtml = `
             <div class="flex-container flexFlowColumn">
                 <p>플레이스홀더 변수명을 입력하세요:</p>
@@ -75,12 +69,12 @@ async function showVariableNamePopup() {
         `;
         
         const template = $(variableNameHtml);
-        currentPopup = new Popup(template, POPUP_TYPE.CONFIRM, '변수명 입력', { 
+        const popup = new Popup(template, POPUP_TYPE.CONFIRM, '변수명 입력', { 
             okButton: '확인', 
             cancelButton: '취소'
         });
         
-        const result = await currentPopup.show();
+        const result = await popup.show();
         
         if (!result) {
             // 취소 버튼을 눌렀거나 ESC로 닫았을 때
@@ -91,41 +85,25 @@ async function showVariableNamePopup() {
         
         // 변수명 유효성 검사
         if (!variableName) {
-            // 팝업을 닫고 에러 메시지 표시
-            if (currentPopup && currentPopup.dlg && currentPopup.dlg.is(':visible')) {
-                currentPopup.dlg.dialog('close');
-            }
-            setTimeout(() => alert('변수명을 입력해주세요.'), 100);
+            alert('변수명을 입력해주세요.');
             continue; // 다시 입력 받기
         }
         
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(variableName)) {
-            // 팝업을 닫고 에러 메시지 표시
-            if (currentPopup && currentPopup.dlg && currentPopup.dlg.is(':visible')) {
-                currentPopup.dlg.dialog('close');
-            }
-            setTimeout(() => alert('변수명 형식이 올바르지 않습니다.\n영문, 숫자, 언더스코어(_)만 사용 가능하며\n숫자로 시작할 수 없습니다.'), 100);
+            alert('변수명 형식이 올바르지 않습니다.\n영문, 숫자, 언더스코어(_)만 사용 가능하며\n숫자로 시작할 수 없습니다.');
             continue; // 다시 입력 받기
         }
         
         // 시스템 예약어 검사
         if (RESERVED_WORDS.includes(variableName.toLowerCase())) {
-            // 팝업을 닫고 에러 메시지 표시
-            if (currentPopup && currentPopup.dlg && currentPopup.dlg.is(':visible')) {
-                currentPopup.dlg.dialog('close');
-            }
-            setTimeout(() => alert(`'${variableName}'는 SillyTavern 시스템 예약어입니다.\n다른 이름을 사용해주세요.`), 100);
+            alert(`'${variableName}'는 SillyTavern 시스템 예약어입니다.\n다른 이름을 사용해주세요.`);
             continue; // 다시 입력 받기
         }
         
         // 중복 검사
         const existingVariables = extension_settings[extensionName].placeholders.map(p => p.variable);
         if (existingVariables.includes(variableName)) {
-            // 팝업을 닫고 에러 메시지 표시
-            if (currentPopup && currentPopup.dlg && currentPopup.dlg.is(':visible')) {
-                currentPopup.dlg.dialog('close');
-            }
-            setTimeout(() => alert('이미 존재하는 변수명입니다.\n다른 이름을 사용해주세요.'), 100);
+            alert('이미 존재하는 변수명입니다.\n다른 이름을 사용해주세요.');
             continue; // 다시 입력 받기
         }
         
@@ -147,11 +125,6 @@ async function showVariableNamePopup() {
         
         // 새로 생성된 플레이스홀더를 선택
         selectedPlaceholderId = newPlaceholder.id;
-        
-        // 성공 시 팝업 명시적으로 닫기
-        if (currentPopup && currentPopup.dlg && currentPopup.dlg.is(':visible')) {
-            currentPopup.dlg.dialog('close');
-        }
     }
     
     return true;
